@@ -12,24 +12,14 @@ from webdataset.writer import ShardWriter as SW
 import re
 import numpy as np
 from math import ceil, log10
-
-imagenet21k_resize_pattern = re.compile('.+/.+/(.*)\.JPEG')
-
-def createInstancetoClassFromSynsetInfo(imageNetMetaFile):
-    mapfile = sciio.loadmat(imageNetMetaFile)
-    sets = mapfile['synsets']
-    idmap = {};
-    # get the mapping between WNID and ImageNetIDs        
-    for x,y in zip(sets['WNID'],sets['ILSVRC2012_ID']):
-        # ugly since the import packaes matlab data into multiple arrays
-        idmap[x[0][0]] = y[0][0][0]
-        
-    return idmap
-    
-
-
-    
      
+def getMatch(fileName, pattern):
+    res = pattern.match(fileName)
+    if res == None:
+        return None
+    else:
+        return res.groups()[0]
+        
 def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName, maxShardFiles=10000, filePattern = None):
     '''
     Build shards from a folder with image files and a given translation table between images and associated classes.
@@ -49,11 +39,12 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
     res = []
     Files = glob.glob(os.path.join(fileFolder, '**')) #get all contents of the imageNet File Folder
     if filePattern == None:
-        res = [(fname,fname) for fname in Files]
+        res = [(fname, fname) for fname in Files]
     else:             
-        res = [(fname,re.match(fname)) for fname in Files]
+        res = [(fname, getMatch(fname,filePattern)) for fname in Files]
                 
     print(res)
+    #get an appropriate length of Shard Names
     perm = np.random.permutation(len(res))
     numFileLength = str(ceil(log10(len(perm))))
     outputpattern = outputFileName + "%0" + numFileLength + "d.tar"
@@ -84,4 +75,47 @@ class ImageNetMapper(object):
         '''
         Constructor
         '''
+        self.idmap = {};
+    
+    def createInstanceToClassFromSynsetInfo(self,imageNetMetaFile):
+        '''
+        create Instance to class mapping from a meta.mat file containing the mapping between 
+        WNIDs and imagenet classes.
         
+        Parameters:
+        imageNetMetaFile:   The meta.mat file from imagenet containing the synsets struct with ILSVRC2021_ID and WNID fields.
+        '''
+        mapfile = sciio.loadmat(imageNetMetaFile)
+        sets = mapfile['synsets']
+        self.idmap = {};
+        # get the mapping between WNID and ImageNetIDs        
+        for x,y in zip(sets['WNID'],sets['ILSVRC2012_ID']):
+            # ugly since the import packs matlab data into multiple arrays
+            self.idmap[x[0][0]] = y[0][0][0]
+    
+    
+    def createInstanceToClassFromGroundTruth(self, groundTruthFile, baseName):
+        '''
+        create Instance to class mapping from a ground truth file for a given 
+        validation set assuming that the files have the form:
+        baseName_XXXXXXXX.JPEG
+        
+        Parameters:
+        groundTruthFile:    The ground truth (i.e. class) file in text format, with one line per image
+        baseName:           The base name of the validation file. 
+        '''
+        i = 1;
+        groundTruth = open(groundTruthFile);
+        cline = groundTruth.readline()
+        while cline !='':
+            cclass = cline;
+            self.idmap[baseName + "%08d" % i + ".JPEG"] = cclass
+            cline = groundTruth.readline();
+            i+=1                
+        
+    def getTrainingPattern(self):
+                
+        return re.compile('.+/.+/(.*)\.JPEG')
+                
+    def getIdmap(self):
+        return self.idmap

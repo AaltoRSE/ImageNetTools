@@ -8,24 +8,33 @@ import webdataset as wds
 from torch.utils.data import DataLoader
 
 
-def readImageNet(q, imageNetUrl, batchsize, numWorkers = 4):
+def readImageNet(q1, q2, imageNetUrl, batchsize, numWorkers = 4):
     '''
     read data from an imageNet File and put batches of a defined size into a queue to be extracted elsewhere
     
     Parameters
     
-    q : a multiprocessing queue to put batches of images in (multiprocessing.Queue)
+    q1 : a multiprocessing queue to put batches of images in (multiprocessing.Queue)
+    q1 : a multiprocessing queue obtain signals when batches are taken out (multiprocessing.Queue)
     imageNetUrl : a FileName/URL of an imageNet file (String)
     batchsize : the batchsize of the dataloader (int) 
     '''
     
     print('Starting to read file')
-    dataset = wds.WebDataset(imageNetUrl).shuffle(1000).decode("torchrgb").to_tuple("jpg;png","json")
+    print(imageNetUrl)
+    queuesize = 0;
+    dataset = wds.WebDataset(imageNetUrl).shuffle(1000).to_tuple("jpg;png","cls")
     dataloader = DataLoader(dataset,num_workers=numWorkers,batch_size=batchsize)     
     for inputs,outputs in dataloader:
-        q.put([inputs,outputs])
+        if queuesize > 10:
+            # this is ugly, and I would prefer something better... 
+            q2.get(block=True)
+            queuesize-=1
+        q1.put([inputs,outputs])
+        queuesize+=1
+        
     #Finally, if we can't read anything any more, we send a signal to close the Process and to close the queue.
-    q.put(False)    
+    q1.put(False)    
 
 class imageNetProvider(object):
     '''
@@ -42,10 +51,20 @@ class imageNetProvider(object):
         numWorker : The number of workers the Dataloader loading the datatset should use (default 1)
         '''        
         
-        self.q = Queue();
-        self.p = Process(target=readImageNet, args=(self.q,imageNetFile,batchSize))
-        self.p.start()                
+        self.q_get = Queue();
+        self.q_push = Queue();
+        self.p = Process(target=readImageNet, args=(self.q_get,self.q_push,imageNetFile,batchSize))
+        self.p.start()  
+                      
+    def __del__(self):        
+        # in case we have not fetched all batches, still finish the reading process and clear the queues        
+        while not self.q_get.empty():
+            self.q_get.get()
+        while not self.q_push.empty():
+            self.q_push.get()            
+        self.p.kill()
         
+            
     def getBatch(self):
         '''
         get a batch of inputs and outputs from the imageDataSet read by this Provider (blocks till a batch is available)
@@ -55,9 +74,10 @@ class imageNetProvider(object):
         
         '''               
         #We'll have to wait for something to be in the queue
-        batch = self.q.get(block=True)
+        batch = self.q_get.get(block=True)
+        self.q_push.put(True)
         #Check, whether we received the termination signal
-        if(batch):
+        if not batch:
             self.p.join()
             return None
         
