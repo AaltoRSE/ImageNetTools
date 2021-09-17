@@ -11,26 +11,28 @@ from torch.utils.data import DataLoader
 def readImageNet(q1, q2, imageNetUrl, batchsize, numWorkers = 4):
     '''
     read data from an imageNet File and put batches of a defined size into a queue to be extracted elsewhere
-    
-    Parameters
+    it puts triplets of keys / items / classes into the queue. If all data is read, it will add `False` to the queue 
+    Parameters batches should have at most batchsize elements, but can have less, depending on the number of workers.
     
     q1 : a multiprocessing queue to put batches of images in (multiprocessing.Queue)
     q1 : a multiprocessing queue obtain signals when batches are taken out (multiprocessing.Queue)
     imageNetUrl : a FileName/URL of an imageNet file (String)
-    batchsize : the batchsize of the dataloader (int) 
+    batchsize : the batchsize of the dataloader (int)
+    numWorkers : The number of workers to load data 
+        
     '''
     
     print('Starting to read file')
     print(imageNetUrl)
     queuesize = 0;
-    dataset = wds.WebDataset(imageNetUrl).shuffle(1000).to_tuple("jpg;png","cls")
+    dataset = wds.WebDataset(imageNetUrl).shuffle(1000).to_tuple("__key__","jpg;png","cls")
     dataloader = DataLoader(dataset,num_workers=numWorkers,batch_size=batchsize)     
-    for inputs,outputs in dataloader:
+    for keys, items, classes in dataloader:
         if queuesize > 10:
             # this is ugly, and I would prefer something better... 
             q2.get(block=True)
             queuesize-=1
-        q1.put([inputs,outputs])
+        q1.put([keys,items,classes])
         queuesize+=1
         
     #Finally, if we can't read anything any more, we send a signal to close the Process and to close the queue.
@@ -80,5 +82,4 @@ class imageNetProvider(object):
         if not batch:
             self.p.join()
             return None
-        
-        return batch[0],batch[1]
+        return (batch[0],batch[1],batch[2])
