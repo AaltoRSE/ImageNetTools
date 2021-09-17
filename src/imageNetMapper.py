@@ -20,7 +20,7 @@ def getMatch(fileName, pattern):
     else:
         return res.groups()[0]
         
-def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName, maxShardFiles=10000, filePattern = None):
+def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName, maxShardFiles=10000, filePattern = None, preprocess = None):
     '''
     Build shards from a folder with image files and a given translation table between images and associated classes.
     
@@ -33,7 +33,8 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
     Optional Parameters:
     maxShardFiles       Maximum number of Files within one shard (default 10000)
     filePattern:        If non-empty the full relative path from the FileFolder to the images will be matched to 
-                        this expression and the first matching group will be used to look up the Class. 
+                        this expression and the first matching group will be used to look up the Class.
+    preprocess:         A function that takes in an read file and preprocesses the raw data. 
     '''
     
     res = []
@@ -58,6 +59,10 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
                 key = os.path.splitext(file)[0]
                 with open(file,'rb') as stream:
                     binary_data = stream.read()
+                    
+                if not preprocess == None:
+                    binary_data = preprocess(binary_data)
+                    
                 sample = {"__key__": key,
                           "jpg": binary_data,
                           "cls": fileclass}
