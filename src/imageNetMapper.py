@@ -47,7 +47,7 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
     print(res)
     #get an appropriate length of Shard Names
     perm = np.random.permutation(len(res))
-    numFileLength = str(ceil(log10(len(perm))))
+    numFileLength = str(ceil(log10(len(perm)/maxShardFiles)))
     outputpattern = outputFileName + "%0" + numFileLength + "d.tar"
     with SW(os.path.join(targetFolder, outputpattern),maxcount=maxShardFiles) as writer:        
         # due to matching we can have entries.
