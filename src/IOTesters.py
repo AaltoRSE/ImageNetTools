@@ -9,6 +9,8 @@ import os.path as path
 import time
 from torch.utils.data import DataLoader
 import imageNetProvider
+import tempfile
+import shutil
 
 def benchMarkReader(datasetFile, readingFunction):
     '''
@@ -29,6 +31,24 @@ def benchMarkReader(datasetFile, readingFunction):
     datarate = dsSize / totaltime / 1e6
     print("The IO speed was %0.4f Mb/s", datarate )
 
+def copyAndLoad(DataSetFile, checkedkey = 'jpeg'):
+    '''
+    First copy the Dataset and then read it from local disc
+    '''    
+    # Copy over
+    tempDir = tempfile.gettempdir()
+    tempFile = path.join(tempDir,'DSFile.tar')
+    shutil.copy(DataSetFile,tempFile)
+    # and load    
+    dataset = wds.WebDataset(tempFile)
+    #Build the wrapper since this will be closer to what we will have
+    dataloader = DataLoader(dataset)    
+    for element in dataloader:        
+        try:
+            #We want to make sure, that the jpeg data is actually loaded
+            temp = element[checkedkey]
+        except:
+            pass    
 
 def pureWDSRead(DatasetFile, checkedkey = 'jpeg'):
     '''
