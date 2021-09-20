@@ -16,7 +16,7 @@ import tempfile
 import imageNetProvider 
 import time
 import importlib
-
+from torch.utils.data import DataLoader
 
  
 class ShardTester(unittest.TestCase):
@@ -46,20 +46,20 @@ class ShardTester(unittest.TestCase):
         pictureNames = {'Data/Images/' + x for x in {'PiC1','Pic10','PiC11','Pic2','Pic3','Pic4','Pic5','Pic6','Pic7','Pic8','Pic9'}}
         shardNames = os.path.join('Data','Shards',"Shards{0..3}.tar")
         prov = imageNetProvider.imageNetProvider(shardNames, 2);
-        batch = prov.getBatch();
+        loader = DataLoader(prov)
         #The first batch should be of size 2. since we have multiple workers,
         # on the data input the batch size is at most
+        batch = next(loader)
         assert len(batch[0])== 2
         #lets see if all keys have been loaded
          
-        while not batch == None:
+        for batch in DataLoader:
             assert len(batch[0])>= 1 # we can't make a stronger assertion here.
-            for key in batch[0]:
+            for key in batch['__keys__']:
                 assert key in pictureNames
                 pictureNames.remove(key)            
             print(batch[2])
             print(batch[0])
-            batch = prov.getBatch()
         
         assert len(pictureNames) == 0            
     

@@ -6,43 +6,17 @@ Created on Sep 7, 2021
 from multiprocessing import Process, Queue
 import webdataset as wds
 from torch.utils.data import DataLoader
+import time
+import os.path as path 
+import torch.utils.data
+from ImageNetMemory import startImageMemory
+from operator import itemgetter
 
-
-def readImageNet(q1, q2, imageNetUrl, batchsize, numWorkers = 4):
-    '''
-    read data from an imageNet File and put batches of a defined size into a queue to be extracted elsewhere
-    it puts triplets of keys / items / classes into the queue. If all data is read, it will add `False` to the queue 
-    Parameters batches should have at most batchsize elements, but can have less, depending on the number of workers.
-    
-    q1 : a multiprocessing queue to put batches of images in (multiprocessing.Queue)
-    q1 : a multiprocessing queue obtain signals when batches are taken out (multiprocessing.Queue)
-    imageNetUrl : a FileName/URL of an imageNet file (String)
-    batchsize : the batchsize of the dataloader (int)
-    numWorkers : The number of workers to load data 
-        
-    '''
-    
-    print('Starting to read file')
-    print(imageNetUrl)
-    queuesize = 0;
-    dataset = wds.WebDataset(imageNetUrl).shuffle(1000).to_tuple("__key__","jpg;png","cls")
-    dataloader = DataLoader(dataset,num_workers=numWorkers,batch_size=batchsize)     
-    for keys, items, classes in dataloader:
-        if queuesize > 10:
-            # this is ugly, and I would prefer something better... 
-            q2.get(block=True)
-            queuesize-=1
-        q1.put([keys,items,classes])
-        queuesize+=1
-        
-    #Finally, if we can't read anything any more, we send a signal to close the Process and to close the queue.
-    q1.put(False)    
-
-class imageNetProvider(object):
+class imageNetProvider(torch.utils.data.IterableDataset):
     '''
     A class that provides an interface 
     '''            
-    def __init__(self, imageNetFile, batchSize, numWorker = 1):
+    def __init__(self, imageNetFiles, batchSize, classes = []):
         '''
         Build a provider, starting to read the given imageNetFile/URL in a spawned process.
         The process will only be closed once the final batch has been obtained.
@@ -53,21 +27,16 @@ class imageNetProvider(object):
         numWorker : The number of workers the Dataloader loading the datatset should use (default 1)
         '''        
         
-        self.q_get = Queue();
-        self.q_push = Queue();
-        self.p = Process(target=readImageNet, args=(self.q_get,self.q_push,imageNetFile,batchSize))
+        self.q_get = Queue()
+        self.q_push = Queue()
+        self.classes = classes
+        self.p = Process(target=startImageMemory, args=(self.q_get,self.q_push,imageNetFiles,batchSize, classes))
         self.p.start()  
-                      
-    def __del__(self):        
-        # in case we have not fetched all batches, still finish the reading process and clear the queues        
-        while not self.q_get.empty():
-            self.q_get.get()
-        while not self.q_push.empty():
-            self.q_push.get()            
-        self.p.kill()
         
-            
-    def getBatch(self):
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
         '''
         get a batch of inputs and outputs from the imageDataSet read by this Provider (blocks till a batch is available)
         
@@ -81,5 +50,25 @@ class imageNetProvider(object):
         #Check, whether we received the termination signal
         if not batch:
             self.p.join()
-            return None
-        return (batch[0],batch[1],batch[2])
+            #Can't iterate any longer
+            raise StopIteration 
+        if self.classes.empty:       
+            return batch    
+        else:
+            result = itemgetter(self.classes,batch)
+            print(result)
+            return result
+            
+                                        
+    def __del__(self):        
+        # in case we have not fetched all batches, still finish the reading process and clear the queues        
+        while not self.q_get.empty():
+            self.q_get.get()
+        while not self.q_push.empty():
+            self.q_push.get()            
+        self.p.kill()
+        
+            
+
+    
+    
