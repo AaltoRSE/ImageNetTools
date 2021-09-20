@@ -69,7 +69,7 @@ def readImageNetBasic(q1, imageNetUrl):
 
     
 
-class ImageNetMemory(object):
+class imageNetMemory(object):
     '''
     classdocs
     '''

@@ -14,7 +14,6 @@ import os
 import numpy.random as random
 import tempfile
 import imageNetProvider 
-import time
 import importlib
 from torch.utils.data import DataLoader
 
@@ -60,6 +59,26 @@ class ShardTester(unittest.TestCase):
                 pictureNames.remove(key)            
                         
         assert len(pictureNames) == 0            
+   
+    def test_ShardReadingMultipleProcesses(self):
+        pictureNames = {'Data/Images/' + x for x in {'PiC1','Pic10','PiC11','Pic2','Pic3','Pic4','Pic5','Pic6','Pic7','Pic8','Pic9'}}
+        shardNames1 = os.path.join('Data','Shards',"Shards{0..1}.tar")
+        shardNames2 = os.path.join('Data','Shards',"Shards{2..3}.tar")
+        prov = imageNetProvider.imageNetProvider([shardNames1,shardNames2], 2);
+        loader = DataLoader(prov)
+        #The first batch should be of size 2. since we have multiple workers,
+        # on the data input the batch size is at most
+        #batch = next(loader)
+        #assert len(batch[0])== 2
+        #lets see if all keys have been loaded
+         
+        for batch in loader:
+            assert len(batch["__key__"])>= 1 # we can't make a stronger assertion here.
+            for key in batch['__key__']:
+                assert key in pictureNames
+                pictureNames.remove(key)            
+                        
+        assert len(pictureNames) == 0   
     
     def test_ShardProcessing(self):
         imageFolder = os.path.join('Data','Images');

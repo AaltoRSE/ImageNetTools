@@ -8,7 +8,7 @@ import webdataset as wds
 import os.path as path
 import time
 from torch.utils.data import DataLoader
-import ImageNetProvider
+import imageNetProvider
 
 def benchMarkReader(datasetFile, readingFunction):
     '''
@@ -79,10 +79,11 @@ def wdsWithWorkersAndBatches(DatasetFile, checkedkey = 'jpeg'):
 def readWithMultipleProcesses(DatasetFile, checkedkey = 'jpeg'):
     '''
     Read in the Dataset using wds and multiple subprocesses.
-    '''    
-    788
-    dataset = wds.WebDataset(DatasetFile)
-    for element in dataset:
+    '''        
+    prov = imageNetProvider.imageNetProvider(DatasetFile, batchSize=100)
+    dataloader = DataLoader(prov,batch_size=100)
+
+    for element in dataloader:
         try:
             #We want to make sure, that the jpeg data is actually loaded
             temp = element[checkedkey]
