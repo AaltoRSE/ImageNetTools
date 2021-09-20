@@ -49,18 +49,16 @@ class ShardTester(unittest.TestCase):
         loader = DataLoader(prov)
         #The first batch should be of size 2. since we have multiple workers,
         # on the data input the batch size is at most
-        batch = next(loader)
-        assert len(batch[0])== 2
+        #batch = next(loader)
+        #assert len(batch[0])== 2
         #lets see if all keys have been loaded
          
-        for batch in DataLoader:
-            assert len(batch[0])>= 1 # we can't make a stronger assertion here.
-            for key in batch['__keys__']:
+        for batch in loader:
+            assert len(batch["__key__"])>= 1 # we can't make a stronger assertion here.
+            for key in batch['__key__']:
                 assert key in pictureNames
                 pictureNames.remove(key)            
-            print(batch[2])
-            print(batch[0])
-        
+                        
         assert len(pictureNames) == 0            
     
     def test_ShardProcessing(self):
@@ -79,21 +77,20 @@ class ShardTester(unittest.TestCase):
         fileBases = {os.path.join(imageFolder,os.path.splitext(file)[0]) for file in files}
         shardNames = os.path.join(self.tempFolder.name,"Shards{0..3}.tar")
         prov = imageNetProvider.imageNetProvider(shardNames, 2);
-        batch = prov.getBatch();
+        loader = DataLoader(prov,batch_size=2)
+
+       #batch = prov.getBatch();
         #The first batch should be of size 2. since we have multiple workers,
         # on the data input the batch size is at most
-        assert len(batch[0])== 2
+        #assert len(batch[0])== 2
         #lets see if all keys have been loaded
          
-        while not batch == None:
-            assert len(batch[0])>= 1 # we can't make a stronger assertion here.
-            for key in batch[0]:
+        for batch in loader: 
+            assert len(batch["__key__"])>= 1 # we can't make a stronger assertion here.
+            for key in batch["__key__"]:
                 assert key in fileBases
                 fileBases.remove(key)            
-            print(batch[2])
-            print(batch[0])
-            batch = prov.getBatch()
-        
+                        
         assert len(fileBases) == 0
             
         

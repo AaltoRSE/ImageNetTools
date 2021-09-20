@@ -4,15 +4,19 @@ Created on Sep 7, 2021
 @author: Thomas Pfau
 '''
 from multiprocessing import Process, Queue
-import webdataset as wds
-from torch.utils.data import DataLoader
-import time
-import os.path as path 
-import torch.utils.data
-from ImageNetMemory import startImageMemory
+from torch.utils.data import IterableDataset
+from ImageNetMemory import ImageNetMemory
 from operator import itemgetter
 
-class imageNetProvider(torch.utils.data.IterableDataset):
+def startImageMemory(pushQueue, waitQueue, imageNetFiles, batchSize=1000, classes = []):
+    print("Initializing ImageNet Memory")
+    memory = ImageNetMemory(pushQueue, waitQueue, imageNetFiles, batchSize, classes)
+    print("Starting ImageNet Memory")    
+    memory.start()
+    print("Memory started")
+    
+    
+class imageNetProvider(IterableDataset):
     '''
     A class that provides an interface 
     '''            
@@ -32,6 +36,7 @@ class imageNetProvider(torch.utils.data.IterableDataset):
         self.classes = classes
         self.p = Process(target=startImageMemory, args=(self.q_get,self.q_push,imageNetFiles,batchSize, classes))
         self.p.start()  
+        self.finished = False
         
     def __iter__(self):
         return self
@@ -45,14 +50,18 @@ class imageNetProvider(torch.utils.data.IterableDataset):
         
         '''               
         #We'll have to wait for something to be in the queue
+        if self.finished:
+            raise StopIteration
+        
         batch = self.q_get.get(block=True)
         self.q_push.put(True)
         #Check, whether we received the termination signal
         if not batch:
             self.p.join()
             #Can't iterate any longer
+            self.finished = True
             raise StopIteration 
-        if self.classes.empty:       
+        if len(self.classes) == 0:       
             return batch    
         else:
             result = itemgetter(self.classes,batch)
@@ -61,11 +70,9 @@ class imageNetProvider(torch.utils.data.IterableDataset):
             
                                         
     def __del__(self):        
-        # in case we have not fetched all batches, still finish the reading process and clear the queues        
-        while not self.q_get.empty():
-            self.q_get.get()
-        while not self.q_push.empty():
-            self.q_push.get()            
+        # kill the remaining processes and deleted the queues
+        del(self.q_get)
+        del(self.q_push)              
         self.p.kill()
         
             

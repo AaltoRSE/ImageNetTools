@@ -32,7 +32,7 @@ def readImageNet(q1, q2, imageNetUrl, batchsize, classes = ["__key__","jpg;png",
     print('Starting to read file')
     print(imageNetUrl)
     queuesize = 0;
-    if classes.empty():
+    if len(classes) == 0:
         dataset = wds.WebDataset(imageNetUrl).shuffle(1000)
     else:
         dataset = wds.WebDataset(imageNetUrl).shuffle(1000).to_tuple(*classes)
@@ -80,19 +80,30 @@ class ImageNetMemory(object):
         Constructor
         '''
         self.readerCount = 0;
-        self.resultQueue = pushQueue
-        self.imageNetFiles = imageNetFiles
+        self.resultQueue = pushQueue        
         self.batchSize = batchSize
+        self.classes = classes
         self.waitQueue = waitQueue
         self.pushedCount = 0
-        self.comChannels = [];
-        for i in range(len(self.imageNetFiles)):
+        self.comChannels = [];        
+        print("Checking imageNet File")
+        if type(imageNetFiles) == type("") or type(imageNetFiles) == type(''):
+            imageNetFiles = [imageNetFiles]
+        self.imageNetFiles = imageNetFiles
+        print("Setting up imagenet Workers")                          
+        for file in self.imageNetFiles:
             q_get = Queue();
             q_push = Queue();
-            p = Process(target=readImageNet, args=(q_get,q_push,self.imageNetFile,self.batchSize))
+            p = Process(target=readImageNet, args=(q_get,q_push,file,self.batchSize, self.classes))
+            p.start()
             self.comChannels.append(ComChannel(q_get,q_push,p))        
-            self.readerCount += 1;                
-                
+            self.readerCount += 1;
+            print("Started Worker number %01i", self.readerCount)
+                            
+    def __del__(self):
+        for comChannel in self.comChannels:
+            #kill all spawned processes, if this object is killed
+            comChannel.process.kill()
     
     def start(self):
         while self.readerCount > 0:            
@@ -127,8 +138,4 @@ class ImageNetMemory(object):
                     comChannel.qOut.put(toRemove)                    
                     comChannel.retrievedElements = c_removed - toRemove;
         #Send the termination signal
-        self.resultQueue.push(False)
-
-def startImageMemory(pushQueue, waitQueue, imageNetFiles, batchSize=1000, classes = []):
-    memory = ImageNetMemory(pushQueue, waitQueue, imageNetFiles, batchSize, classes)    
-    memory.start()
+        self.resultQueue.put(False)
