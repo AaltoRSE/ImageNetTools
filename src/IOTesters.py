@@ -76,9 +76,10 @@ def wdsWithWorkersAndBatches(DatasetFile, checkedkey = 'jpeg'):
         #This will happen with the last element of some sets, or if there are further items which are not jpegs in it...
         pass
 
-def readWithMultipleProcesses(DatasetFile, checkedkey = 'jpeg'):
+def readWithProcess(DatasetFile, checkedkey = 'jpeg'):
     '''
-    Read in the Dataset using wds and multiple subprocesses.
+    Read in the Dataset using wds from an external processes.
+    If DataSetFile consists of multiple filenames, one process per filename will be started to parallelise IO.
     '''        
     prov = imageNetProvider.imageNetProvider(DatasetFile, batchSize=100)
     dataloader = DataLoader(prov,batch_size=100)
@@ -90,4 +91,16 @@ def readWithMultipleProcesses(DatasetFile, checkedkey = 'jpeg'):
         except:
             pass   
         
+def readWithMultipleProcesses(DatasetFile, checkedkey = 'jpeg'):
+    '''
 
+    '''            
+    prov = imageNetProvider.imageNetProvider(DatasetFile, batchSize=100)
+    dataloader = DataLoader(prov,batch_size=100)
+
+    for element in dataloader:
+        try:
+            #We want to make sure, that the jpeg data is actually loaded
+            temp = element[checkedkey]
+        except:
+            pass   
