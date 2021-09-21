@@ -8,8 +8,17 @@ from torch.utils.data import IterableDataset
 from imageNetMemory import imageNetMemory
 from operator import itemgetter
 
-def startImageMemory(pushQueue, waitQueue, imageNetFiles, batchSize=1000, classes = []):
-    memory = imageNetMemory(pushQueue, waitQueue, imageNetFiles, batchSize, classes)
+def startImageMemory(pushQueue, waitQueue, imageNetFiles, batchSize=1000, labels = []):
+    '''
+    Initialize and start a ImageNetMemory that reads in an imageNet file
+    Parameters:
+    pushQueue:         The Queue, where items from the dataset are pushed to.
+    waitQueue:         The Queue the Memory will look for signals before reading on
+    imageNetFiles:     One or more File-names where the ImageNet Dataset is stored (assumed to be tar files)
+    batchSize:         The size of the requested batches
+    labels:            The labels
+    '''
+    memory = imageNetMemory(pushQueue, waitQueue, imageNetFiles, batchSize, labels)
     memory.start()
     
     
