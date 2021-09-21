@@ -47,8 +47,8 @@ def copyAndLoad(DataSetFile, checkedkey = 'jpeg'):
         try:
             #We want to make sure, that the jpeg data is actually loaded
             temp = element[checkedkey]
-        except:
-            pass    
+        except Exception as e:
+            print(e)    
 
 def pureWDSRead(DatasetFile, checkedkey = 'jpeg'):
     '''
@@ -61,8 +61,8 @@ def pureWDSRead(DatasetFile, checkedkey = 'jpeg'):
         try:
             #We want to make sure, that the jpeg data is actually loaded
             temp = element[checkedkey]
-        except:
-            pass        
+        except Exception as e:
+            print(e)        
         
 def wdsWithWorkers(DatasetFile, checkedkey = 'jpeg'):
     '''
@@ -75,8 +75,8 @@ def wdsWithWorkers(DatasetFile, checkedkey = 'jpeg'):
         try:
             #We want to make sure, that the jpeg data is actually loaded
             temp = element[checkedkey]
-        except:
-            pass
+        except Exception as e:
+            print(e)
 
 def wdsWithWorkersAndBatches(DatasetFile, checkedkey = 'jpeg'):    
     '''
@@ -90,11 +90,11 @@ def wdsWithWorkersAndBatches(DatasetFile, checkedkey = 'jpeg'):
             try:
                 #We want to make sure, that the jpeg data is actually loaded
                 temp = element[checkedkey]
-            except:
-                pass
-    except:
+            except Exception as e:
+                print(e)
+    except Exception as e:
         #This will happen with the last element of some sets, or if there are further items which are not jpegs in it...
-        pass
+        print(e)
 
 def readWithProcess(DatasetFile, checkedkey = 'jpeg'):
     '''
@@ -108,8 +108,8 @@ def readWithProcess(DatasetFile, checkedkey = 'jpeg'):
         try:
             #We want to make sure, that the jpeg data is actually loaded
             temp = element[checkedkey]
-        except:
-            pass   
+        except Exception as e:
+            print(e)   
         
 def readWithMultipleProcesses(DatasetFile, checkedkey = 'jpeg'):
     '''
@@ -122,5 +122,5 @@ def readWithMultipleProcesses(DatasetFile, checkedkey = 'jpeg'):
         try:
             #We want to make sure, that the jpeg data is actually loaded
             temp = element[checkedkey]
-        except:
-            pass   
+        except Exception as e:
+            print(e)   
