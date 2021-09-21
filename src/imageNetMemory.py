@@ -86,11 +86,9 @@ class imageNetMemory(object):
         self.waitQueue = waitQueue
         self.pushedCount = 0
         self.comChannels = [];        
-        print("Checking imageNet File")
         if type(imageNetFiles) == type("") or type(imageNetFiles) == type(''):
             imageNetFiles = [imageNetFiles]
         self.imageNetFiles = imageNetFiles
-        print("Setting up imagenet Workers")                          
         for file in self.imageNetFiles:
             q_get = Queue();
             q_push = Queue();
@@ -98,7 +96,6 @@ class imageNetMemory(object):
             p.start()
             self.comChannels.append(ComChannel(q_get,q_push,p))        
             self.readerCount += 1;
-            print("Started Worker number %01i", self.readerCount)
                             
     def __del__(self):
         for comChannel in self.comChannels:

@@ -9,11 +9,8 @@ from imageNetMemory import imageNetMemory
 from operator import itemgetter
 
 def startImageMemory(pushQueue, waitQueue, imageNetFiles, batchSize=1000, classes = []):
-    print("Initializing ImageNet Memory")
     memory = imageNetMemory(pushQueue, waitQueue, imageNetFiles, batchSize, classes)
-    print("Starting ImageNet Memory")    
     memory.start()
-    print("Memory started")
     
     
 class imageNetProvider(IterableDataset):
