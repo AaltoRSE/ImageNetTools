@@ -27,9 +27,9 @@ def benchMarkReader(datasetFile, readingFunction):
     dsSize = path.getsize(datasetFile)
     starttime = time.perf_counter()
     readingFunction(datasetFile)
-    totaltime = time.perf_counter - starttime;
+    totaltime = time.perf_counter() - starttime;
     datarate = dsSize / totaltime / 1e6
-    print("The IO speed was %0.4f Mb/s", datarate )
+    print("The IO speed was {:0.4f} Mb/s".format(datarate) )
 
 def copyAndLoad(DataSetFile, checkedkey = 'jpeg'):
     '''
