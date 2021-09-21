@@ -11,6 +11,9 @@ from torch.utils.data import DataLoader
 import imageNetProvider
 import tempfile
 import shutil
+import re
+
+ShardPattern = re.compile('(.*)\{([0-9]+)\.\.([0-9]+)\}(.*)')
 
 def benchMarkReader(datasetFile, readingFunction):
     '''
@@ -24,7 +27,19 @@ def benchMarkReader(datasetFile, readingFunction):
                         The data of the dazaset can (and should) be directly discarded after reading. 
     '''
     # First we get the size of the dataset
-    dsSize = path.getsize(datasetFile)
+    res = ShardPattern.match(datasetFile)
+    if not res == None:
+        start = int(res.groups()[1])
+        end = int(res.groups()[2])
+        padding = str(len(res.groups()[1]))
+        dsSize = 0;
+        for i in range(start,end+1):
+            numberstring = ("{:0" + padding + "d}").format(i)
+            dsFile = re.sub(ShardPattern,r'\g<1>' + numberstring + r'\g<4>',datasetFile)
+            dsSize+= path.getsize(dsFile)
+        pass
+    else:
+        dsSize = path.getsize(datasetFile)
     starttime = time.perf_counter()
     itemsTouched = readingFunction(datasetFile)
     totaltime = time.perf_counter() - starttime;
