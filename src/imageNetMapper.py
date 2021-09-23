@@ -12,6 +12,9 @@ from webdataset.writer import ShardWriter as SW
 import re
 import numpy as np
 from math import ceil, log10
+import tarfile
+import tempfile
+
      
 def getMatch(fileName, pattern):
     res = pattern.match(fileName)
@@ -76,7 +79,7 @@ class ImageNetMapper(object):
 
     
 
-    def __init__(self, params):
+    def __init__(self):
         '''
         Constructor
         '''
@@ -98,6 +101,36 @@ class ImageNetMapper(object):
             # ugly since the import packs matlab data into multiple arrays
             self.idmap[x[0][0]] = y[0][0][0]
     
+    def extractAndPackTrainData(self, TrainDataFile):
+        '''
+        Extract a Training data file (assumed to have the following internal structure:
+        Train.tar 
+        |--> class1.tar
+        |--> class2.tar
+        |...
+        |--> classXYZ.tar
+        and build randomized shards from it, including labels.
+        '''
+        tmpDir = tempfile.mkdtemp()
+        
+        file = tarfile.open(TrainDataFile,mode='r|')
+        currentfile = file.next()        
+        while not currentfile == None:
+            currentClassName = os.path.splitext(currentfile.name)[0]
+            innerFile = file.extractfile(currentfile)
+            innerTarFile = tarfile.open(fileobj=innerFile,mode='r|')
+            innerJPEG = innerTarFile.next()
+            #Create a directory for all those files.
+            outFolder = os.path.join(tmpDir, currentClassName);
+            os.mkdir(outFolder)            
+            while not innerJPEG == None:            
+                JPEGFile = innerTarFile.extractfile(innerJPEG)
+                outfile = open(os.path.join(outFolder,innerJPEG.name),'wb')
+                outfile.write(JPEGFile.read())
+                outfile.close()
+                innerJPEG = innerTarFile.next()
+            currentfile = file.next()
+        
     
     def createInstanceToClassFromGroundTruth(self, groundTruthFile, baseName):
         '''
