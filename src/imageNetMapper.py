@@ -51,7 +51,6 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
     else:             
         res = [(fname, getMatch(fname,filePattern)) for fname in Files]
                 
-    print(res)
     #get an appropriate length of Shard Names
     perm = np.random.permutation(len(res))
     numFileLength = str(ceil(log10(len(perm)/maxcount)))
@@ -130,7 +129,7 @@ class ImageNetMapper(object):
 
         '''
         tmpDir = tempfile.mkdtemp()
-        
+        print('Extracting individual files to : ' + tmpDir)
         file = tarfile.open(trainDataFile,mode='r|')
         currentfile = file.next()
         #Extract All files to the local tmp directory, placing them in a directory named after the internal .jar File        
@@ -141,8 +140,10 @@ class ImageNetMapper(object):
             innerJPEG = innerTarFile.next()
             #Create a directory for all those files.
             outFolder = os.path.join(tmpDir, currentClassName);
-            os.mkdir(outFolder)            
-            while not innerJPEG == None:            
+            os.mkdir(outFolder)  
+            print('Opening ' + currentClassName)                     
+            while not innerJPEG == None:
+                            
                 JPEGFile = innerTarFile.extractfile(innerJPEG)
                 outfile = open(os.path.join(outFolder,innerJPEG.name),'wb')
                 outfile.write(JPEGFile.read())
@@ -153,9 +154,7 @@ class ImageNetMapper(object):
         self.createInstanceToClassFromSynsetInfo(metaDataFile)
         # now, Create classes with the mapping
         filepattern = re.compile('.*/(.*?)/[^/]*') #get the last folder, which is the class.
-        buildShardsFromFolder(tmpDir, self.idmap, targetFolder, dsName, filePattern=filepattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess)
-        
-        
+        buildShardsFromFolder(tmpDir, self.idmap, targetFolder, dsName, filePattern=filepattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess)        
     
     def createInstanceToClassFromGroundTruth(self, groundTruthFile, baseName):
         '''
