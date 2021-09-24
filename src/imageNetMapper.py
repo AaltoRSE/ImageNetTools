@@ -21,9 +21,10 @@ def getMatch(fileName, pattern):
     if res == None:
         return None
     else:
-        return res.groups()[0]
+        return res.groups()[0]  
         
-def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName, maxShardFiles=10000, filePattern = None, preprocess = None):
+        
+def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName, filePattern = None, maxcount=100000, maxsize=3e9, preprocess = None):
     '''
     Build shards from a folder with image files and a given translation table between images and associated classes.
     
@@ -34,10 +35,13 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
     outputFileName:     The Base name of the output file (ShardNumber and .tar will be added
     
     Optional Parameters:
-    maxShardFiles       Maximum number of Files within one shard (default 10000)
+    maxcount:           Maximum number of files within one shard (default 100000)
+    maxsize:            Maximum size of each shard(default 3e9)
     filePattern:        If non-empty the full relative path from the FileFolder to the images will be matched to 
                         this expression and the first matching group will be used to look up the Class.
     preprocess:         A function that takes in an read file and preprocesses the raw data. 
+                        NOTE: The data provided to preprocess, is the raw data, if it's an image and you need an image object, 
+                              you have to decode it in the preprocess function.
     '''
     
     res = []
@@ -50,9 +54,9 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
     print(res)
     #get an appropriate length of Shard Names
     perm = np.random.permutation(len(res))
-    numFileLength = str(ceil(log10(len(perm)/maxShardFiles)))
+    numFileLength = str(ceil(log10(len(perm)/maxcount)))
     outputpattern = outputFileName + "%0" + numFileLength + "d.tar"
-    with SW(os.path.join(targetFolder, outputpattern),maxcount=maxShardFiles) as writer:        
+    with SW(os.path.join(targetFolder, outputpattern),maxcount=maxcount,maxsize=maxsize) as writer:        
         # due to matching we can have entries.
         for i in perm:
             data = res[i]
@@ -101,7 +105,7 @@ class ImageNetMapper(object):
             # ugly since the import packs matlab data into multiple arrays
             self.idmap[x[0][0]] = y[0][0][0]
     
-    def extractAndPackTrainData(self, TrainDataFile):
+    def extractAndPackTrainData(self, TrainDataFile, metaDataFile, dsName):
         '''
         Extract a Training data file (assumed to have the following internal structure:
         Train.tar 
@@ -114,7 +118,8 @@ class ImageNetMapper(object):
         tmpDir = tempfile.mkdtemp()
         
         file = tarfile.open(TrainDataFile,mode='r|')
-        currentfile = file.next()        
+        currentfile = file.next()
+        #Extract All files to the local tmp directory, placing them in a directory named after the internal .jar File        
         while not currentfile == None:
             currentClassName = os.path.splitext(currentfile.name)[0]
             innerFile = file.extractfile(currentfile)
@@ -130,7 +135,11 @@ class ImageNetMapper(object):
                 outfile.close()
                 innerJPEG = innerTarFile.next()
             currentfile = file.next()
-        
+        # build the mapping
+        self.createInstanceToClassFromSynsetInfo(metaDataFile)
+        # now, Create classes with the mapping
+        tmpOutFolder = tempfile.mkdtemp();
+        buildShardsFromFolder(tmpDir,self.idmap,tmpOutFolder,dsName,)
     
     def createInstanceToClassFromGroundTruth(self, groundTruthFile, baseName):
         '''

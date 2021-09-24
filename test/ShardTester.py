@@ -5,6 +5,7 @@ Created on Sep 14, 2021
 '''
 #import src for tests
 import sys
+from imageNetMapper import ImageNetMapper
 
 sys.path.append('../src')
 
@@ -16,7 +17,7 @@ import tempfile
 import imageNetProvider 
 import importlib
 from torch.utils.data import DataLoader
-
+import filecmp
  
 class ShardTester(unittest.TestCase):
 
@@ -112,10 +113,17 @@ class ShardTester(unittest.TestCase):
                         
         assert len(fileBases) == 0
             
-        
-        
+    def test_Debundling(self):
+            mapper = ImageNetMapper()
+            mapper.extractAndPackTrainData(os.path.join('Data','Bundle.tar'),os.path.join('Data','meta.mat'))
+            
 
-        
+    def test_Mapping(self):
+        mapper = ImageNetMapper()
+        mapper.createInstanceToClassFromSynsetInfo(os.path.join('Data','meta.mat'));
+        assert(mapper.idmap['Part1'] == '1')
+        assert(mapper.idmap['Part4'] == '4')
+         
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testShardProcessing']
     unittest.main()
