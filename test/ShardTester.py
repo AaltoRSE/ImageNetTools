@@ -35,7 +35,7 @@ class ShardTester(unittest.TestCase):
         files = os.listdir(imageFolder)        
         classes = random.permutation(len(files))
         mapping = {os.path.join(imageFolder,x) : y for (x,y) in zip(files,classes)}      
-        imageNetMapper.buildShardsFromFolder(os.path.join('Data','Images'), mapping, self.tempFolder.name, 'Shards', maxShardFiles=3)        
+        imageNetMapper.buildShardsFromFolder(os.path.join('Data','Images'), mapping, self.tempFolder.name, 'Shards', maxcount=3)        
         filesInTempFolder = os.listdir(self.tempFolder.name)
         assert len(filesInTempFolder) == 4
         for file in filesInTempFolder:
@@ -87,7 +87,7 @@ class ShardTester(unittest.TestCase):
         classes = random.permutation(len(files))
         mapping = {os.path.join(imageFolder,x) : y for (x,y) in zip(files,classes)}
         
-        imageNetMapper.buildShardsFromFolder(os.path.join('Data','Images'), mapping, self.tempFolder.name, 'Shards', maxShardFiles=3)
+        imageNetMapper.buildShardsFromFolder(os.path.join('Data','Images'), mapping, self.tempFolder.name, 'Shards', maxcount=3)
         
         filesInTempFolder = os.listdir(self.tempFolder.name)
         assert len(filesInTempFolder) == 4
@@ -113,10 +113,12 @@ class ShardTester(unittest.TestCase):
                         
         assert len(fileBases) == 0
             
-    def test_Debundling(self):
-            mapper = ImageNetMapper()
-            mapper.extractAndPackTrainData(os.path.join('Data','Bundle.tar'),os.path.join('Data','meta.mat'))
-            
+    def test_DatasetMapping(self):
+        outFolder = os.path.join(self.tempFolder.name,'dsOutput')
+        os.mkdir(outFolder)
+        mapper = ImageNetMapper()
+        mapper.extractAndPackTrainData(os.path.join('Data','Bundle.tar'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
+        pass   
 
     def test_Mapping(self):
         mapper = ImageNetMapper()
