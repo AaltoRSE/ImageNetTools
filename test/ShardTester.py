@@ -118,7 +118,8 @@ class ShardTester(unittest.TestCase):
         os.mkdir(outFolder)
         mapper = ImageNetMapper()
         mapper.extractAndPackTrainData(os.path.join('Data','Bundle.tar'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
-        pass   
+        assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
+        #For now, we won't test contents (as that's tested elsewhere.
 
     def test_Mapping(self):
         mapper = ImageNetMapper()
