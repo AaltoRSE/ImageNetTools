@@ -5,7 +5,7 @@ Created on Sep 10, 2021
 '''
 
 import os 
-import glob
+import pathlib
 import scipy.io as sciio
 import webdataset as wds
 from webdataset.writer import ShardWriter as SW
@@ -44,8 +44,8 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
                               you have to decode it in the preprocess function.
     '''
     
-    res = []
-    Files = glob.glob(os.path.join(fileFolder, '**')) #get all contents of the imageNet File Folder
+    res = []     
+    Files = [os.fspath(f) for f in pathlib.Path(fileFolder).rglob('*.*')]
     if filePattern == None:
         res = [(fname, fname) for fname in Files]
     else:             
@@ -105,7 +105,7 @@ class ImageNetMapper(object):
             # ugly since the import packs matlab data into multiple arrays
             self.idmap[x[0][0]] = y[0][0][0]
     
-    def extractAndPackTrainData(self, TrainDataFile, metaDataFile, dsName):
+    def extractAndPackTrainData(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None):
         '''
         Extract a Training data file (assumed to have the following internal structure:
         Train.tar 
@@ -114,10 +114,24 @@ class ImageNetMapper(object):
         |...
         |--> classXYZ.tar
         and build randomized shards from it, including labels.
+        
+        Parameters:
+        trainDataFile:      The location of the training data file
+        metaDataFile:       The location of the metaData .mat file to build the mapping
+        targetFolder:       The output folder (optimally network space)
+        dsName:             Base name of the output ffiles (The resulting sharded DS will be stored as dsname000X..XXXX.tar)
+               
+        Optional Parameters:
+        maxcount:           Maximum number of files within one shard (default 100000)
+        maxsize:            Maximum size of each shard(default 3e9)
+        preprocess:         A function that takes in an read file and preprocesses the raw data. 
+                            NOTE: The data provided to preprocess, is the raw data, if it's an image and you need an image object, 
+                            you have to decode it in the preprocess function. 
+
         '''
         tmpDir = tempfile.mkdtemp()
         
-        file = tarfile.open(TrainDataFile,mode='r|')
+        file = tarfile.open(trainDataFile,mode='r|')
         currentfile = file.next()
         #Extract All files to the local tmp directory, placing them in a directory named after the internal .jar File        
         while not currentfile == None:
@@ -138,8 +152,10 @@ class ImageNetMapper(object):
         # build the mapping
         self.createInstanceToClassFromSynsetInfo(metaDataFile)
         # now, Create classes with the mapping
-        tmpOutFolder = tempfile.mkdtemp();
-        buildShardsFromFolder(tmpDir,self.idmap,tmpOutFolder,dsName,)
+        filepattern = re.compile('.*/(.*?)/[^/]*') #get the last folder, which is the class.
+        buildShardsFromFolder(tmpDir, self.idmap, targetFolder, dsName, filePattern=filepattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess)
+        
+        
     
     def createInstanceToClassFromGroundTruth(self, groundTruthFile, baseName):
         '''
@@ -149,7 +165,7 @@ class ImageNetMapper(object):
         
         Parameters:
         groundTruthFile:    The ground truth (i.e. class) file in text format, with one line per image
-        baseName:           The base name of the validation file. 
+        baseName:           The base name of the validation file.
         '''
         i = 1;
         groundTruth = open(groundTruthFile);
