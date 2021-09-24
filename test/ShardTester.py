@@ -47,12 +47,7 @@ class ShardTester(unittest.TestCase):
         shardNames = os.path.join('Data','Shards',"Shards{0..3}.tar")
         prov = imageNetProvider.imageNetProvider(shardNames, 2);
         loader = DataLoader(prov)
-        #The first batch should be of size 2. since we have multiple workers,
-        # on the data input the batch size is at most
-        #batch = next(loader)
-        #assert len(batch[0])== 2
-        #lets see if all keys have been loaded
-         
+
         for batch in loader:
             assert len(batch["__key__"])>= 1 # we can't make a stronger assertion here.
             for key in batch['__key__']:
@@ -67,12 +62,6 @@ class ShardTester(unittest.TestCase):
         shardNames2 = os.path.join('Data','Shards',"Shards{2..3}.tar")
         prov = imageNetProvider.imageNetProvider([shardNames1,shardNames2], 2);
         loader = DataLoader(prov)
-        #The first batch should be of size 2. since we have multiple workers,
-        # on the data input the batch size is at most
-        #batch = next(loader)
-        #assert len(batch[0])== 2
-        #lets see if all keys have been loaded
-         
         for batch in loader:
             assert len(batch["__key__"])>= 1 # we can't make a stronger assertion here.
             for key in batch['__key__']:
@@ -98,12 +87,6 @@ class ShardTester(unittest.TestCase):
         shardNames = os.path.join(self.tempFolder.name,"Shards{0..3}.tar")
         prov = imageNetProvider.imageNetProvider(shardNames, 2);
         loader = DataLoader(prov,batch_size=2)
-
-       #batch = prov.getBatch();
-        #The first batch should be of size 2. since we have multiple workers,
-        # on the data input the batch size is at most
-        #assert len(batch[0])== 2
-        #lets see if all keys have been loaded
          
         for batch in loader: 
             assert len(batch["__key__"])>= 1 # we can't make a stronger assertion here.
