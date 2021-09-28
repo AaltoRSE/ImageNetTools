@@ -59,20 +59,11 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
     with SW(os.path.join(targetFolder, outputpattern),maxcount=maxcount,maxsize=maxsize) as writer:        
         # due to matching we can have entries.
         for i in perm:
-            data = res[i]
-            if data[1] != None:
-                file = data[0]                
-                fileclass = fileToClass[data[1]]
-                key = os.path.splitext(file)[0]
-                with open(file,'rb') as stream:
-                    binary_data = stream.read()
-                    
-                if not preprocess == None:
-                    binary_data = preprocess(binary_data)
-                    
-                sample = {"__key__": key,
-                          "jpg": binary_data,
-                          "cls": fileclass}
+            data = res[i]            
+            if data[1] != None:                         
+                with open(data[0],'rb') as stream:
+                    binary_data =stream.read()        
+                sample = getSample(fileToClass, data, preprocess, binary_data)                    
                 writer.write(sample)
                                 
 
@@ -97,8 +88,18 @@ def buildShardsFromSource(sourceTar, fileToClass, targetFolder, outputFileName, 
                               you have to decode it in the preprocess function.
     '''
     
-    res = []     
-    Files = [os.fspath(f) for f in pathlib.Path(sourceTar).rglob('*.*')]
+    res = []
+    #Open the tarfie as stream.     
+    sourceFile = tarfile.open(sourceTar,mode='r|')
+    Files = {}
+    currentfile = sourceFile.next()
+        #Extract All files to the local tmp directory, placing them in a directory named after the internal .jar File        
+    while not currentfile == None:
+        name = currentfile.name
+        JPEGFile = sourceFile.extractfile(currentfile)                
+        Files[currentfile.name] = JPEGFile.read()         
+        currentfile = sourceFile.next()
+        
     if filePattern == None:
         res = [(fname, fname) for fname in Files]
     else:             
@@ -111,21 +112,23 @@ def buildShardsFromSource(sourceTar, fileToClass, targetFolder, outputFileName, 
     with SW(os.path.join(targetFolder, outputpattern),maxcount=maxcount,maxsize=maxsize) as writer:        
         # due to matching we can have entries.
         for i in perm:
-            data = res[i]
+            data = res[i]            
             if data[1] != None:
-                file = data[0]                
-                fileclass = fileToClass[data[1]]
-                key = os.path.splitext(file)[0]
-                with open(file,'rb') as stream:
-                    binary_data = stream.read()
-                    
-                if not preprocess == None:
-                    binary_data = preprocess(binary_data)
-                    
-                sample = {"__key__": key,
-                          "jpg": binary_data,
-                          "cls": fileclass}
+                binary_data = Files[data[0]]                         
+                sample = getSample(fileToClass, data, preprocess, binary_data)                    
                 writer.write(sample)
+                                
+def getSample(fileToClass, data, preprocess, binary_data):
+    file = data[0]
+    fileclass = fileToClass[data[1]]
+    key = os.path.splitext(file)[0]
+    if not preprocess == None:
+        binary_data = preprocess(binary_data)         
+    sample = {"__key__": key,
+                  "jpg": binary_data,
+                  "cls": fileclass}
+    return sample
+    
     
 class ImageNetMapper(object):
     '''
