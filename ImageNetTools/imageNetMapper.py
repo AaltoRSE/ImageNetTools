@@ -67,13 +67,13 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
                 writer.write(sample)
                                 
 
-def buildShardsFromSource(sourceTar, fileToClass, targetFolder, outputFileName, filePattern = None, maxcount=100000, maxsize=3e9, preprocess = None):
+def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, filePattern = None, maxcount=100000, maxsize=3e9, preprocess = None):
     '''
     Build shuffled shards from a source tar file keeping all elements in memory. 
     This function can easily fail if insufficient memory is allocated. 
     
     Parameters
-    sourceTar:          The original tar file  
+    Files:              The in-memory dictionary containing fileName : image data pairs
     fileToClass:        The translation table how to get from the fileName to the Associated class
     targetFolder:       The folder to write the Shards to.
     outputFileName:     The Base name of the output file (ShardNumber and .tar will be added
@@ -90,16 +90,6 @@ def buildShardsFromSource(sourceTar, fileToClass, targetFolder, outputFileName, 
     
     res = []
     #Open the tarfie as stream.     
-    sourceFile = tarfile.open(sourceTar,mode='r|')
-    Files = {}
-    currentfile = sourceFile.next()
-        #Extract All files to the local tmp directory, placing them in a directory named after the internal .jar File        
-    while not currentfile == None:
-        name = currentfile.name
-        JPEGFile = sourceFile.extractfile(currentfile)                
-        Files[currentfile.name] = JPEGFile.read()         
-        currentfile = sourceFile.next()
-        
     if filePattern == None:
         res = [(fname, fname) for fname in Files]
     else:             
@@ -117,6 +107,7 @@ def buildShardsFromSource(sourceTar, fileToClass, targetFolder, outputFileName, 
                 binary_data = Files[data[0]]                         
                 sample = getSample(fileToClass, data, preprocess, binary_data)                    
                 writer.write(sample)
+                                
                                 
 def getSample(fileToClass, data, preprocess, binary_data):
     file = data[0]
@@ -183,32 +174,84 @@ class ImageNetMapper(object):
                             you have to decode it in the preprocess function. 
 
         '''
-        tmpDir = tempfile.mkdtemp()
-        print('Extracting individual files to : ' + tmpDir)
+
+        #Extract All files to the local tmp directory, placing them in a directory named after the internal .jar File        
+
+        # build the mapping
+        self.createInstanceToClassFromSynsetInfo(metaDataFile)
+        # now, Create classes with the mapping
+        buildShardsFromFolder(tmpDir, self.idmap, targetFolder, dsName, filePattern=finalFilePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess)        
+            
+        
+    def extractAndPackTrainDataInMemory(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None):
+        '''
+        Extract a Training data file (assumed to have the following internal structure:
+        Train.tar 
+        |--> class1.tar
+        |--> class2.tar
+        |...
+        |--> classXYZ.tar
+        and build randomized shards from it, including labels.
+        
+        Parameters:
+        trainDataFile:      The location of the training data file
+        metaDataFile:       The location of the metaData .mat file to build the mapping
+        targetFolder:       The output folder (optimally network space)
+        dsName:             Base name of the output ffiles (The resulting sharded DS will be stored as dsname000X..XXXX.tar)
+               
+        Optional Parameters:
+        maxcount:           Maximum number of files within one shard (default 100000)
+        maxsize:            Maximum size of each shard(default 3e9)
+        preprocess:         A function that takes in an read file and preprocesses the raw data. 
+                            NOTE: The data provided to preprocess, is the raw data, if it's an image and you need an image object, 
+                            you have to decode it in the preprocess function. 
+        '''        
+        Files = {}
+        currentfile = sourceFile.next()
+        #Extract All files to the local tmp directory, placing them in a directory named after the internal .jar File        
+
+
+    def readTrainData(self, trainDataFile, toDisk):
+        '''
+        Read in the data from a training data set of imagemap. 
+        
+        Parameters:
+        trainDataFile:     The tarballs containing the training data
+        toDisk:            Whether to store the data to disk or in a dictonary in memory
+        
+        Returns:
+        Files:             If toDisk is true, Files is the folder containing the data.
+                           If toDisk sis false, Files is a dictionary of FilesName to Binary data
+        '''
+        if(toDisk):
+            Files = tempfile.mkdtemp()
+            print('Extracting individual files to : ' + Files)            
+        else:
+            Files = {}
         file = tarfile.open(trainDataFile,mode='r|')
         currentfile = file.next()
-        #Extract All files to the local tmp directory, placing them in a directory named after the internal .jar File        
         while not currentfile == None:
             currentClassName = os.path.splitext(currentfile.name)[0]
             innerFile = file.extractfile(currentfile)
             innerTarFile = tarfile.open(fileobj=innerFile,mode='r|')
             innerJPEG = innerTarFile.next()
             #Create a directory for all those files.
-            outFolder = os.path.join(tmpDir, currentClassName);
-            os.mkdir(outFolder)  
+            if toDisk:
+                outFolder = os.path.join(Files, currentClassName);
+                os.mkdir(outFolder)  
             print('Opening ' + currentClassName)                     
             while not innerJPEG == None:
                             
                 JPEGFile = innerTarFile.extractfile(innerJPEG)
-                outfile = open(os.path.join(outFolder,innerJPEG.name),'wb')
-                outfile.write(JPEGFile.read())
-                outfile.close()
+                binary_data = JPEGFile.read() 
+                if toDisk:
+                    outfile = open(os.path.join(outFolder,innerJPEG.name),'wb')
+                    outfile.write(binary_data)
+                    outfile.close()
+                else:
+                    Files[innerJPEG.name] = binary_data                    
                 innerJPEG = innerTarFile.next()
             currentfile = file.next()
-        # build the mapping
-        self.createInstanceToClassFromSynsetInfo(metaDataFile)
-        # now, Create classes with the mapping
-        buildShardsFromFolder(tmpDir, self.idmap, targetFolder, dsName, filePattern=finalFilePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess)        
     
     def createInstanceToClassFromGroundTruth(self, groundTruthFile, baseName):
         '''
