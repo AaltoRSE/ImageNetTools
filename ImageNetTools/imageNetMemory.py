@@ -30,7 +30,6 @@ def readImageNet(q1, q2, imageNetUrl, batchsize, classes = ["__key__","jpg;png",
     '''
     
     print('Starting to read file')
-    print(imageNetUrl)
     queuesize = 0;
     if len(classes) == 0:
         dataset = wds.WebDataset(imageNetUrl).shuffle(1000)

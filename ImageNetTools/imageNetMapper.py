@@ -15,6 +15,7 @@ from math import ceil, log10
 import tarfile
 import tempfile
 
+finalFilePattern = re.compile('.*/(.*?)/[^/]*.JPEG')
      
 def getMatch(fileName, pattern):
     res = pattern.match(fileName)
@@ -74,6 +75,57 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
                           "cls": fileclass}
                 writer.write(sample)
                                 
+
+def buildShardsFromSource(sourceTar, fileToClass, targetFolder, outputFileName, filePattern = None, maxcount=100000, maxsize=3e9, preprocess = None):
+    '''
+    Build shuffled shards from a source tar file keeping all elements in memory. 
+    This function can easily fail if insufficient memory is allocated. 
+    
+    Parameters
+    sourceTar:          The original tar file  
+    fileToClass:        The translation table how to get from the fileName to the Associated class
+    targetFolder:       The folder to write the Shards to.
+    outputFileName:     The Base name of the output file (ShardNumber and .tar will be added
+    
+    Optional Parameters:
+    maxcount:           Maximum number of files within one shard (default 100000)
+    maxsize:            Maximum size of each shard(default 3e9)
+    filePattern:        If non-empty the full relative path from the FileFolder to the images will be matched to 
+                        this expression and the first matching group will be used to look up the Class.
+    preprocess:         A function that takes in an read file and preprocesses the raw data. 
+                        NOTE: The data provided to preprocess, is the raw data, if it's an image and you need an image object, 
+                              you have to decode it in the preprocess function.
+    '''
+    
+    res = []     
+    Files = [os.fspath(f) for f in pathlib.Path(fileFolder).rglob('*.*')]
+    if filePattern == None:
+        res = [(fname, fname) for fname in Files]
+    else:             
+        res = [(fname, getMatch(fname,filePattern)) for fname in Files]
+                
+    #get an appropriate length of Shard Names
+    perm = np.random.permutation(len(res))
+    numFileLength = str(ceil(log10(len(perm)/maxcount)))
+    outputpattern = outputFileName + "%0" + numFileLength + "d.tar"
+    with SW(os.path.join(targetFolder, outputpattern),maxcount=maxcount,maxsize=maxsize) as writer:        
+        # due to matching we can have entries.
+        for i in perm:
+            data = res[i]
+            if data[1] != None:
+                file = data[0]                
+                fileclass = fileToClass[data[1]]
+                key = os.path.splitext(file)[0]
+                with open(file,'rb') as stream:
+                    binary_data = stream.read()
+                    
+                if not preprocess == None:
+                    binary_data = preprocess(binary_data)
+                    
+                sample = {"__key__": key,
+                          "jpg": binary_data,
+                          "cls": fileclass}
+                writer.write(sample)
     
 class ImageNetMapper(object):
     '''
@@ -153,8 +205,7 @@ class ImageNetMapper(object):
         # build the mapping
         self.createInstanceToClassFromSynsetInfo(metaDataFile)
         # now, Create classes with the mapping
-        filepattern = re.compile('.*/(.*?)/[^/]*') #get the last folder, which is the class.
-        buildShardsFromFolder(tmpDir, self.idmap, targetFolder, dsName, filePattern=filepattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess)        
+        buildShardsFromFolder(tmpDir, self.idmap, targetFolder, dsName, filePattern=finalFilePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess)        
     
     def createInstanceToClassFromGroundTruth(self, groundTruthFile, baseName):
         '''
@@ -177,7 +228,7 @@ class ImageNetMapper(object):
         
     def getTrainingPattern(self):
                 
-        return re.compile('.+/.+/(.*)\.JPEG')
+        return re.compile('.+/([^/]+)\.JPEG')
                 
     def getIdmap(self):
         return self.idmap
