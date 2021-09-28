@@ -15,7 +15,7 @@ from math import ceil, log10
 import tarfile
 import tempfile
 
-finalFilePattern = re.compile('.*/(.*?)/[^/]*.JPEG')
+finalFilePattern = re.compile('.*/(.*?)/[^/]*')
      
 def getMatch(fileName, pattern):
     res = pattern.match(fileName)
@@ -98,7 +98,7 @@ def buildShardsFromSource(sourceTar, fileToClass, targetFolder, outputFileName, 
     '''
     
     res = []     
-    Files = [os.fspath(f) for f in pathlib.Path(fileFolder).rglob('*.*')]
+    Files = [os.fspath(f) for f in pathlib.Path(sourceTar).rglob('*.*')]
     if filePattern == None:
         res = [(fname, fname) for fname in Files]
     else:             

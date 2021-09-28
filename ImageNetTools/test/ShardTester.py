@@ -4,10 +4,7 @@ Created on Sep 14, 2021
 @author: thomas
 '''
 #import src for tests
-import sys
 from imageNetMapper import ImageNetMapper
-
-sys.path.append('../src')
 
 import unittest
 import imageNetMapper
@@ -17,7 +14,6 @@ import tempfile
 import imageNetProvider 
 import importlib
 from torch.utils.data import DataLoader
-import filecmp
  
 class ShardTester(unittest.TestCase):
 
