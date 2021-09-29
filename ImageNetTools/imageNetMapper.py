@@ -55,7 +55,10 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
                 
     #get an appropriate length of Shard Names
     perm = np.random.permutation(len(res))
-    numFileLength = str(ceil(log10(len(perm)/maxcount)))
+    numFileLength = ceil(log10(len(perm)/maxcount))
+    if numFileLength < 1:
+        numFileLength = 1;
+    numFileLength = str(numFileLength)
     outputpattern = outputFileName + "%0" + numFileLength + "d.tar"
     with SW(os.path.join(targetFolder, outputpattern),maxcount=maxcount,maxsize=maxsize) as writer:        
         # due to matching we can have entries.
@@ -239,38 +242,48 @@ class ImageNetMapper(object):
         dataset = wds.WebDataset(trainDataFile)
         for element in dataset:
             #Here, we will check, whether this is a tar of tar or a tar of JPEGs.
+            currentClassName = element['__key__']
+            #Create a directory for all those files.
+            outFolder = currentClassName
             if 'tar' in element.keys():
                 # this is a tar of tars. 
-                f = BinaryReader(element['tar']);
-                currentClassName = element['__key__'];
+                f = BinaryReader(element['tar']);                
                 innerTarFile = tarfile.open(fileobj=f)
-                innerJPEG = innerTarFile.next()
-                #Create a directory for all those files.
-                outFolder = currentClassName
+                innerJPEG = innerTarFile.next()                                    
+                #Process tar for the current Class
                 if toDisk:                        
-                    outFolder = os.path.join(Files, currentClassName);                
-                    os.mkdir(outFolder)                    
-                #Process tar for the current Class                     
+                    outFolder = os.path.join(Files, currentClassName);                                   
+                    os.mkdir(outFolder)
                 while not innerJPEG == None:
                     JPEGFile = innerTarFile.extractfile(innerJPEG)
                     binary_data = JPEGFile.read() 
                     self.storeData(binary_data,toDisk,FileName=os.path.join(outFolder,innerJPEG.name),MemoryDictionary=Files)
                     innerJPEG = innerTarFile.next()                                                        
-            else:
+            else:                
                 if 'jpeg' in element.keys():
-                    #only jpegs, directly store them.   
-                    binary_data = element['jpeg']
-                    self.storeData(binary_data,toDisk,FileName=element['__key__'],MemoryDictionary=Files)
+                    #only jpegs, directly store them.
+                    fName = element['__key__']+'.JPEG' 
+                    if toDisk:
+                        fName = os.path.join(Files, fName)                    
+                    binary_data = element['jpeg']           
+                    self.storeData(binary_data,toDisk,FileName=fName,MemoryDictionary=Files)
         return Files
                 
     def storeData(self,data,toDisk=False,FileName=None,MemoryDictionary={}):
         if toDisk:
-            outfile = open(FileName,'wb')
+            try:
+                outfile = open(FileName,'wb')
+            except FileNotFoundError:
+                # potentially, we have to build the path
+                dirToBuild = os.path.dirname(FileName)
+                os.mkdir(dirToBuild)
+                outfile = open(FileName,'wb')
+                                
             outfile.write(data)
             outfile.close()
         else:
             MemoryDictionary[FileName] = data
-        pass
+        
         
     
     def createInstanceToClassFromGroundTruth(self, groundTruthFile, baseName):
