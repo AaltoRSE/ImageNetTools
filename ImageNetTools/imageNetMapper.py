@@ -16,7 +16,7 @@ import tarfile
 import tempfile
 from io import BytesIO as BinaryReader
 
-finalFilePattern = re.compile('.*/(.*?)/[^/]*')
+finalFilePattern = re.compile('.*?([^/]+)/[^/]*\..*')
      
 def getMatch(fileName, pattern):
     res = pattern.match(fileName)
@@ -243,9 +243,10 @@ class ImageNetMapper(object):
                 innerTarFile = tarfile.open(fileobj=f)
                 innerJPEG = innerTarFile.next()
                 #Create a directory for all those files.
-                if toDisk:
-                    outFolder = os.path.join(Files, currentClassName);
-                    os.mkdir(outFolder)  
+                outFolder = currentClassName
+                if toDisk:                        
+                    outFolder = os.path.join(Files, currentClassName);                
+                    os.mkdir(outFolder)                    
                 #Process tar for the current Class                     
                 while not innerJPEG == None:
                     JPEGFile = innerTarFile.extractfile(innerJPEG)
