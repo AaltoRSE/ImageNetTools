@@ -44,10 +44,21 @@ def benchMarkReader(datasetFile, readingFunction):
     itemsTouched = readingFunction(datasetFile)
     totaltime = time.perf_counter() - starttime;
     datarate = dsSize / totaltime / 1e6
-    print("The IO speed was {:0.4f} Mb/s".format(datarate) )
+    print("The IO speed for " + readingFunction.__name__ + " was {:0.4f} Mb/s".format(datarate) )
     print("{:} items were read".format(itemsTouched) )
 
-def copyAndLoad(DataSetFile, checkedkey = 'jpeg'):
+def checkKeys(keysA, keysB):
+    if len(keysB) < len(keysA):
+        for key in keysB:
+            if key in keysA:
+                return True 
+    else:
+        for key in keysA:
+            if key in keysB:
+                return True
+    return False
+
+def copyAndLoad(DataSetFile, checkedkey = ['jpeg','tar']):
     '''
     First copy the Dataset and then read it from local disc
     '''    
@@ -61,16 +72,12 @@ def copyAndLoad(DataSetFile, checkedkey = 'jpeg'):
     #Build the wrapper since this will be closer to what we will have
     dataloader = DataLoader(dataset)    
     for element in dataloader:        
-        try:
-            #We want to make sure, that the jpeg data is actually loaded
-            temp = element[checkedkey]
+        if checkKeys(checkedkey,element.keys()):
             itemsTouched+=1
-        except Exception as e:
-            print(e)
-    
+        
     return itemsTouched    
 
-def pureWDSRead(DatasetFile, checkedkey = 'jpeg'):
+def pureWDSRead(DatasetFile, checkedkey = ['jpeg','tar']):
     '''
     Read in the Dataset purely with WDS
     '''    
@@ -79,15 +86,11 @@ def pureWDSRead(DatasetFile, checkedkey = 'jpeg'):
     #Build the wrapper since this will be closer to what we will have
     dataloader = DataLoader(dataset)    
     for element in dataloader:        
-        try:
-            #We want to make sure, that the jpeg data is actually loaded
-            temp = element[checkedkey]
-            itemsTouched+=1
-        except Exception as e:
-            print(e)        
+        if checkKeys(checkedkey,element.keys()):
+            itemsTouched+=1  
     return itemsTouched
 
-def wdsWithWorkers(DatasetFile, checkedkey = 'jpeg'):
+def wdsWithWorkers(DatasetFile, checkedkey = ['jpeg','tar']):
     '''
     Read in the Dataset with WDS using multiple workers from pyTorch
     '''   
@@ -96,15 +99,11 @@ def wdsWithWorkers(DatasetFile, checkedkey = 'jpeg'):
     #Build the wrapper since this will be closer to what we will have
     dataloader = DataLoader(dataset,num_workers = 4)    
     for element in dataloader:        
-        try:
-            #We want to make sure, that the jpeg data is actually loaded
-            temp = element[checkedkey]
-            itemsTouched+=1            
-        except Exception as e:
-            print(e)
+        if checkKeys(checkedkey,element.keys()):
+            itemsTouched+=1
     return itemsTouched
 
-def wdsWithWorkersAndBatches(DatasetFile, checkedkey = 'jpeg'):    
+def wdsWithWorkersAndBatches(DatasetFile, checkedkey = ['jpeg','tar']):    
     '''
     Read in the Dataset with WDS using multiple workers and a larger batch_size from pyTorch
     '''
@@ -114,33 +113,10 @@ def wdsWithWorkersAndBatches(DatasetFile, checkedkey = 'jpeg'):
     dataloader = DataLoader(dataset,num_workers = 4,batch_size=100)
     try:    
         for element in dataloader:        
-            try:
-                #We want to make sure, that the jpeg data is actually loaded
-                temp = element[checkedkey]
-                itemsTouched+=1                
-            except Exception as e:
-                print(e)
+            if checkKeys(checkedkey,element.keys()):
+                itemsTouched+=1
     except Exception as e:
         #This will happen with the last element of some sets, or if there are further items which are not jpegs in it...
         print(e)
-    return itemsTouched
-
-def readWithProcess(DatasetFile, checkedkey = 'jpeg'):
-    '''
-    Read in the Dataset using wds from an external processes.
-    If DataSetFile consists of multiple filenames, one process per filename will be started to parallelise IO.
-    '''        
-    itemsTouched = 0
-    
-    prov = imageNetProvider.imageNetProvider(DatasetFile, batchSize=100)
-    dataloader = DataLoader(prov,batch_size=100)
-
-    for element in dataloader:
-        try:
-            #We want to make sure, that the jpeg data is actually loaded
-            temp = element[checkedkey]
-            itemsTouched+=1            
-        except Exception as e:
-            print(e)   
     return itemsTouched
         
