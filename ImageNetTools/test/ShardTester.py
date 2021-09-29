@@ -49,8 +49,7 @@ class ShardTester(unittest.TestCase):
             assert len(batch["__key__"])>= 1 # we can't make a stronger assertion here.
             for key in batch['__key__']:
                 assert key in pictureNames
-                pictureNames.remove(key)            
-                        
+                pictureNames.remove(key)                                    
         assert len(pictureNames) == 0            
    
     def test_ShardReadingMultipleProcesses(self):
@@ -114,9 +113,24 @@ class ShardTester(unittest.TestCase):
         mapper.extractAndPackTrainDataInMemory(os.path.join('Data','Bundle.tar'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
         assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
         #For now, we won't test contents (as that's tested elsewhere.
+        
+    def test_TestIO(self):
+        ImageNetTools.benchmarkIOSpeeds('Data/Bundle_no_tars.tar')
+        
+    def test_testNonTaredTrain(self):        
+        outFolder = os.path.join(self.tempFolder.name,'dsOutput')
+        os.mkdir(outFolder)
+        mapper = ImageNetMapper()
+        mapper.extractAndPackTrainData(os.path.join('Data','Bundle_no_tars.tar'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
+        assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
 
-    def test_testIO(self):        
-        ImageNetTools.benchmarkIOSpeeds('Data/Bundle.tar')
+    def test_testNonTaredTrain_inMemory(self):        
+        outFolder = os.path.join(self.tempFolder.name,'dsOutput')
+        os.mkdir(outFolder)
+        mapper = ImageNetMapper()
+        mapper.extractAndPackTrainDataInMemory(os.path.join('Data','Bundle_no_tars.tar'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
+        assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
+
         
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testShardProcessing']
