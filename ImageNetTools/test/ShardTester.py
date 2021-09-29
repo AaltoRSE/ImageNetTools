@@ -14,6 +14,7 @@ import tempfile
 import imageNetProvider 
 import importlib
 from torch.utils.data import DataLoader
+import ImageNetTools
  
 class ShardTester(unittest.TestCase):
 
@@ -114,7 +115,9 @@ class ShardTester(unittest.TestCase):
         assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
         #For now, we won't test contents (as that's tested elsewhere.
 
-            
+    def test_testIO(self):        
+        ImageNetTools.benchmarkIOSpeeds('Data/Bundle.tar')
+        
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testShardProcessing']
     unittest.main()
