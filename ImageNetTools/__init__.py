@@ -4,8 +4,12 @@ Created on Sep 28, 2021
 @author: Thomas Pfau
 '''
 
-from imageNetMapper import ImageNetMapper
-import IOTesters
+from .imageNetMapper import ImageNetMapper
+from .IOTesters import benchmarkReader
+from .IOTesters import pureWDSRead 
+from .IOTesters import copyAndLoad 
+from .IOTesters import wdsWithWorkers 
+from .IOTesters import wdsWithWorkersAndBatches  
 
 def buildShardsForTrainingDataset(trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, inMemory = False):
         mapper = ImageNetMapper();
@@ -17,9 +21,9 @@ def buildShardsForTrainingDataset(trainDataFile, metaDataFile, targetFolder, dsN
 
 
 def benchmarkIOSpeeds(DataSet): 
-    IOTesters.benchMarkReader(DataSet, IOTesters.pureWDSRead)
-    IOTesters.benchMarkReader(DataSet, IOTesters.copyAndLoad)
-    IOTesters.benchMarkReader(DataSet, IOTesters.wdsWithWorkers)
-    IOTesters.benchMarkReader(DataSet, IOTesters.wdsWithWorkersAndBatches)
+    benchmarkReader(DataSet, IOTesters.pureWDSRead)
+    benchmarkReader(DataSet, IOTesters.copyAndLoad)
+    benchmarkReader(DataSet, IOTesters.wdsWithWorkers)
+    benchmarkReader(DataSet, IOTesters.wdsWithWorkersAndBatches)
 
     

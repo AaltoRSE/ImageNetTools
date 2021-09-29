@@ -8,14 +8,13 @@ import webdataset as wds
 import os.path as path
 import time
 from torch.utils.data import DataLoader
-import imageNetProvider
 import tempfile
 import shutil
 import re
 
 ShardPattern = re.compile('(.*)\{([0-9]+)\.\.([0-9]+)\}(.*)')
 
-def benchMarkReader(datasetFile, readingFunction):
+def benchmarkReader(datasetFile, readingFunction):
     '''
     This function benchmarks the IO speed on a given dataset using the provided reading function.
     The reading function is assumed to read in the whole dataset, without further processing the data
