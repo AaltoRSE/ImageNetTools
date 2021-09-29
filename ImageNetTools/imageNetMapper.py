@@ -14,6 +14,7 @@ import numpy as np
 from math import ceil, log10
 import tarfile
 import tempfile
+from io import BytesIO as BinaryReader
 
 finalFilePattern = re.compile('.*/(.*?)/[^/]*')
      
@@ -93,8 +94,7 @@ def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, file
     if filePattern == None:
         res = [(fname, fname) for fname in Files]
     else:             
-        res = [(fname, getMatch(fname,filePattern)) for fname in Files]
-                
+        res = [(fname, getMatch(fname,filePattern)) for fname in Files]            
     #get an appropriate length of Shard Names
     perm = np.random.permutation(len(res))
     numFileLength = str(ceil(log10(len(perm)/maxcount)))
@@ -176,7 +176,7 @@ class ImageNetMapper(object):
         '''
 
         #Extract All files to the local tmp directory, placing them in a directory named after the internal .jar File        
-
+        tmpDir = self.readTrainData(trainDataFile,True)
         # build the mapping
         self.createInstanceToClassFromSynsetInfo(metaDataFile)
         # now, Create classes with the mapping
@@ -206,14 +206,17 @@ class ImageNetMapper(object):
                             NOTE: The data provided to preprocess, is the raw data, if it's an image and you need an image object, 
                             you have to decode it in the preprocess function. 
         '''        
-        Files = {}
-        currentfile = sourceFile.next()
+        Files = self.readTrainData(trainDataFile,False)
+        self.createInstanceToClassFromSynsetInfo(metaDataFile)
+        buildShardsFromSource(Files, self.idmap, targetFolder, dsName, filePattern=finalFilePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess)        
+
         #Extract All files to the local tmp directory, placing them in a directory named after the internal .jar File        
 
 
     def readTrainData(self, trainDataFile, toDisk):
         '''
-        Read in the data from a training data set of imagemap. 
+        Read in the data from a training data set of imagemap. Training data is assumed to be in a 
+        tar file, either as individual images, or again as tar files 
         
         Parameters:
         trainDataFile:     The tarballs containing the training data
@@ -223,35 +226,48 @@ class ImageNetMapper(object):
         Files:             If toDisk is true, Files is the folder containing the data.
                            If toDisk sis false, Files is a dictionary of FilesName to Binary data
         '''
+        
         if(toDisk):
             Files = tempfile.mkdtemp()
             print('Extracting individual files to : ' + Files)            
         else:
             Files = {}
-        file = tarfile.open(trainDataFile,mode='r|')
-        currentfile = file.next()
-        while not currentfile == None:
-            currentClassName = os.path.splitext(currentfile.name)[0]
-            innerFile = file.extractfile(currentfile)
-            innerTarFile = tarfile.open(fileobj=innerFile,mode='r|')
-            innerJPEG = innerTarFile.next()
-            #Create a directory for all those files.
-            if toDisk:
-                outFolder = os.path.join(Files, currentClassName);
-                os.mkdir(outFolder)  
-            print('Opening ' + currentClassName)                     
-            while not innerJPEG == None:
-                            
-                JPEGFile = innerTarFile.extractfile(innerJPEG)
-                binary_data = JPEGFile.read() 
-                if toDisk:
-                    outfile = open(os.path.join(outFolder,innerJPEG.name),'wb')
-                    outfile.write(binary_data)
-                    outfile.close()
-                else:
-                    Files[innerJPEG.name] = binary_data                    
+        #this is more efficient than using tar files, and handles all our issues.
+        dataset = wds.WebDataset(trainDataFile)
+        for element in dataset:
+            #Here, we will check, whether this is a tar of tar or a tar of JPEGs.
+            if 'tar' in element.keys():
+                # this is a tar of tars. 
+                f = BinaryReader(element['tar']);
+                currentClassName = element['__key__'];
+                innerTarFile = tarfile.open(fileobj=f)
                 innerJPEG = innerTarFile.next()
-            currentfile = file.next()
+                #Create a directory for all those files.
+                if toDisk:
+                    outFolder = os.path.join(Files, currentClassName);
+                    os.mkdir(outFolder)  
+                #Process tar for the current Class                     
+                while not innerJPEG == None:
+                    JPEGFile = innerTarFile.extractfile(innerJPEG)
+                    binary_data = JPEGFile.read() 
+                    self.storeData(binary_data,toDisk,FileName=os.path.join(outFolder,innerJPEG.name),MemoryDictionary=Files)
+                    innerJPEG = innerTarFile.next()                                                        
+            else:
+                if 'jpeg' in element.keys():
+                    #only jpegs, directly store them.   
+                    binary_data = element['jpeg']
+                    self.storeData(binary_data,toDisk,FileName=element['__key__'],MemoryDictionary=Files)
+        return Files
+                
+    def storeData(self,data,toDisk=False,FileName=None,MemoryDictionary={}):
+        if toDisk:
+            outfile = open(FileName,'wb')
+            outfile.write(data)
+            outfile.close()
+        else:
+            MemoryDictionary[FileName] = data
+        pass
+        
     
     def createInstanceToClassFromGroundTruth(self, groundTruthFile, baseName):
         '''
