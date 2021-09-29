@@ -191,7 +191,10 @@ class ImageNetMapper(object):
         |--> class2.tar
         |...
         |--> classXYZ.tar
-        and build randomized shards from it, including labels.
+        and build randomized shards from it, including labels. 
+        IMPORTANT: This function will load the whole dataset to memory and not use any
+                   local storage. While making it faster than using local drives, it
+                   requires large amounts of memory.
         
         Parameters:
         trainDataFile:      The location of the training data file
