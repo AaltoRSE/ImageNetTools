@@ -105,7 +105,16 @@ class ShardTester(unittest.TestCase):
         mapper.createInstanceToClassFromSynsetInfo(os.path.join('Data','meta.mat'));
         assert(mapper.idmap['Part1'] == '1')
         assert(mapper.idmap['Part4'] == '4')
-         
+        
+    def test_inMemory(self):
+        outFolder = os.path.join(self.tempFolder.name,'dsOutput')
+        os.mkdir(outFolder)
+        mapper = ImageNetMapper()
+        mapper.extractAndPackTrainDataInMemory(os.path.join('Data','Bundle.tar'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
+        assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
+        #For now, we won't test contents (as that's tested elsewhere.
+
+            
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testShardProcessing']
     unittest.main()
