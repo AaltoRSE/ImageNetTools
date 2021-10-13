@@ -21,8 +21,8 @@ def buildShardsForTrainingDataset(trainDataFile, metaDataFile, targetFolder, dsN
 
 
 def benchmarkIOSpeeds(DataSet): 
-    benchmarkReader(DataSet, IOTesters.pureWDSRead)
     benchmarkReader(DataSet, IOTesters.copyAndLoad)
+    benchmarkReader(DataSet, IOTesters.pureWDSRead)
     benchmarkReader(DataSet, IOTesters.wdsWithWorkers)
     benchmarkReader(DataSet, IOTesters.wdsWithWorkersAndBatches)
 
