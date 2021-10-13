@@ -7,7 +7,9 @@ Created on Sep 29, 2021
 import ImageNetTools
 import sys
 import getopt
-from _ast import Try
+import os
+import re
+
 
 def parseOptions(configFile):
     f = open(configFile,'r');
@@ -17,10 +19,12 @@ def parseOptions(configFile):
     maxcount=100000
     maxsize=3e9
     inMemory = False
+    filePattern = ImageNetTools.imageNetMapper.finalFilePattern
+    
     for option in configOptions:
         #Remove comments
         if '#' in option:
-            option = option.split('#')[0]
+            option = option.split('#',1)[0]
         #Skip lines without aktual assignments
         if not '=' in option:
             continue
@@ -29,11 +33,11 @@ def parseOptions(configFile):
         optionName = cOption[0].lstrip().rstrip();
         optionValue = cOption[1].lstrip().rstrip();
         if optionName == 'dataFile':  
-            trainDataFile = optionValue;
+            trainDataFile = os.path.expandvars(optionValue);
         elif optionName == 'metaDataFile':
-            metaDataFile = optionValue
+            metaDataFile = os.path.expandvars(optionValue)
         elif optionName == 'targetFolder':
-            targetFolder = optionValue
+            targetFolder = os.path.expandvars(optionValue)
         elif optionName == 'dsName':
             dsName = optionValue
         elif optionName == 'maxcount':
@@ -42,8 +46,10 @@ def parseOptions(configFile):
             maxsize = int(float(optionValue))
         elif optionName == 'inMemory':
             inMemory = optionValue == 'True'         
+        elif optionName == 'fileRegexp':
+            filePattern = re.compile(optionValue)           
                      
-    return trainDataFile, metaDataFile, targetFolder, dsName, maxcount, maxsize, inMemory        
+    return trainDataFile, metaDataFile, targetFolder, dsName, maxcount, maxsize, inMemory, filePattern        
         
 def main(argv):
     try:
@@ -54,11 +60,11 @@ def main(argv):
     for opt, arg in opts:
         if opt in ("-c", "--conf"):
             try:
-                trainDataFile, metaDataFile, targetFolder, dsName, maxcount, maxsize, inMemory = parseOptions(arg);
+                trainDataFile, metaDataFile, targetFolder, dsName, maxcount, maxsize, inMemory, filePattern = parseOptions(arg);
             except:
                 printHelp()
                 sys.exit(2)
-    ImageNetTools.buildShardsForTrainingDataset(trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, inMemory = False)     
+    ImageNetTools.buildShardsForTrainingDataset(trainDataFile, metaDataFile, targetFolder, dsName, maxcount=maxcount, maxsize=maxsize, inMemory = inMemory, filePattern=filePattern)     
     sys.exit()
    
 def printHelp():
@@ -66,14 +72,17 @@ def printHelp():
     print('python shard.py -c configFileName' )
     print('The options available in the config file are:')
     print('required:')
-    print('dataFile=/path/to/data/file          # The path to the dataset file to shard')
-    print('metaDataFile=/path/to/meta/data/file # The path to the metaData file')
+    print('dataFile=/path/to/data/file          # The path to the dataset tar file to shard')
     print('targetFolder=/path/to/output/folder  # The output folder for the shards')      
-    print('Optional (with default values:')
-    print('dsName=Dataset            # The Base name of the output shards')
-    print('maxcount=100000           # Maximium number of files per shard')
-    print('maxsize=3e9               # Maximium size per shard')
-    print('inMemory=False            # Whether sharding should be performed entirely in memory')  
+    print('metaDataFile=/path/to/meta/info/file # The path to the metaData file')
+    print('Optional (with default values:')    
+    print('fileRegexp=.*?([^/]+)/[^/]*\..*      # The regular expression to extract the class from the files')
+    print("                                     # The default uses the folder name before the actual file")
+    print('dsName=Dataset                       # The Base name of the output shards')
+    print('maxcount=100000                      # Maximium number of files per shard')
+    print('maxsize=3e9                          # Maximium size per shard')
+    print('inMemory=False                       # Whether sharding should be performed entirely in memory')  
+    
     
     
 main(sys.argv[1:])    
