@@ -190,7 +190,7 @@ class ImageNetMapper(object):
         else:
             self.createInstanceToClassFromGroundTruth(metaDataFile, groundTruthBaseName)
             #No pattern, since we use ground-truthes.            
-            filePattern = None
+            filePattern = re.compile('.*?[^/]*?/?([^/]*\..*)')
         # now, Create classes with the mapping
         buildShardsFromFolder(tmpDir, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess)        
             
