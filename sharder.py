@@ -28,7 +28,7 @@ def parseOptions(configFile):
         #Skip lines without aktual assignments
         if not '=' in option:
             continue
-        cOption = option.split('=')
+        cOption = option.split('=',1)
         #Remove leading and trailing whitespaces.
         optionName = cOption[0].lstrip().rstrip();
         optionValue = cOption[1].lstrip().rstrip();
