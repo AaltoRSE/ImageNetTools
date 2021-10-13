@@ -20,7 +20,7 @@ def parseOptions(configFile):
     maxsize=3e9
     inMemory = False
     filePattern = ImageNetTools.imageNetMapper.finalFilePattern
-    
+    groundTruthBaseName = False
     for option in configOptions:
         #Remove comments
         if '#' in option:
@@ -48,8 +48,10 @@ def parseOptions(configFile):
             inMemory = optionValue == 'True'         
         elif optionName == 'fileRegexp':
             filePattern = re.compile(optionValue)           
-                     
-    return trainDataFile, metaDataFile, targetFolder, dsName, maxcount, maxsize, inMemory, filePattern        
+        elif optionName == 'groundTruthBaseName':
+            groundTruthBaseName = optionValue   
+                         
+    return trainDataFile, metaDataFile, targetFolder, dsName, maxcount, maxsize, inMemory, filePattern, groundTruthBaseName       
         
 def main(argv):
     try:
@@ -60,11 +62,11 @@ def main(argv):
     for opt, arg in opts:
         if opt in ("-c", "--conf"):
             try:
-                trainDataFile, metaDataFile, targetFolder, dsName, maxcount, maxsize, inMemory, filePattern = parseOptions(arg);
+                trainDataFile, metaDataFile, targetFolder, dsName, maxcount, maxsize, inMemory, filePattern, groundTruthBaseName = parseOptions(arg);
             except:
                 printHelp()
                 sys.exit(2)
-    ImageNetTools.buildShardsForTrainingDataset(trainDataFile, metaDataFile, targetFolder, dsName, maxcount=maxcount, maxsize=maxsize, inMemory = inMemory, filePattern=filePattern)     
+    ImageNetTools.buildShardsForTrainingDataset(trainDataFile, metaDataFile, targetFolder, dsName, maxcount=maxcount, maxsize=maxsize, inMemory = inMemory, filePattern=filePattern, groundTruthBaseName=groundTruthBaseName)     
     sys.exit()
    
 def printHelp():
@@ -81,7 +83,8 @@ def printHelp():
     print('dsName=Dataset                       # The Base name of the output shards')
     print('maxcount=100000                      # Maximium number of files per shard')
     print('maxsize=3e9                          # Maximium size per shard')
-    print('inMemory=False                       # Whether sharding should be performed entirely in memory')  
+    print('inMemory=False                       # Whether sharding should be performed entirely in memory')
+    print('groundTruthBaseName=ILSVRC2012_val_  # The base name for a ground truth file to add the ID to (normally validation)')  
     
     
     

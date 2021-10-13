@@ -93,7 +93,7 @@ def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, file
     '''
     
     res = []
-    #Open the tarfie as stream.     
+    #Open the tarfile as stream.     
     if filePattern == None:
         res = [(fname, fname) for fname in Files]
     else:             
@@ -153,7 +153,9 @@ class ImageNetMapper(object):
             # ugly since the import packs matlab data into multiple arrays
             self.idmap[x[0][0]] = y[0][0][0]
     
-    def extractAndPackTrainData(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern):
+    
+    
+    def extractAndPackTrainData(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, groundTruthBaseName=False):
         '''
         Extract a Training data file (assumed to have the following internal structure:
         Train.tar 
@@ -182,12 +184,18 @@ class ImageNetMapper(object):
         #Extract All files to the local tmp directory, placing them in a directory named after the internal .jar File        
         tmpDir = self.readTrainData(trainDataFile,True)
         # build the mapping
-        self.createInstanceToClassFromSynsetInfo(metaDataFile)
+        # ground Truth base name only needs to be provided, if it actually is a base name. Otherwise this is an indicator that its 
+        if not groundTruthBaseName:
+            self.createInstanceToClassFromSynsetInfo(metaDataFile)
+        else:
+            self.createInstanceToClassFromGroundTruth(metaDataFile, groundTruthBaseName)
+            #No pattern, since we use ground-truthes.            
+            filePattern = None
         # now, Create classes with the mapping
         buildShardsFromFolder(tmpDir, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess)        
             
         
-    def extractAndPackTrainDataInMemory(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern):
+    def extractAndPackTrainDataInMemory(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, metaIsSynset=True, groundTruthBaseName=False):
         '''
         Extract a Training data file (assumed to have the following internal structure:
         Train.tar 
@@ -215,7 +223,13 @@ class ImageNetMapper(object):
         filePattern:        The pattern used to extract the WNIDs for each element  
         '''        
         Files = self.readTrainData(trainDataFile,False)
-        self.createInstanceToClassFromSynsetInfo(metaDataFile)
+        if not groundTruthBaseName:
+            self.createInstanceToClassFromSynsetInfo(metaDataFile)
+        else:
+            self.createInstanceToClassFromGroundTruth(metaDataFile, groundTruthBaseName)
+            #No pattern, since we use ground-truthes.            
+            filePattern = None
+            
         buildShardsFromSource(Files, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess)        
 
         #Extract All files to the local tmp directory, placing them in a directory named after the internal .jar File        
