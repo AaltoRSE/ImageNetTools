@@ -11,12 +11,12 @@ from .IOTesters import copyAndLoad
 from .IOTesters import wdsWithWorkers 
 from .IOTesters import wdsWithWorkersAndBatches  
 
-def buildShardsForTrainingDataset(trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, inMemory = False):
+def buildShardsForTrainingDataset(trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, inMemory = False, filePattern=None):
         mapper = ImageNetMapper();
         if inMemory:
-            mapper.extractAndPackTrainDataInMemory(trainDataFile, metaDataFile, targetFolder, dsName, maxcount, maxsize, preprocess)
+            mapper.extractAndPackTrainDataInMemory(trainDataFile, metaDataFile, targetFolder, dsName, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess, filePattern=filePattern)
         else:
-            mapper.extractAndPackTrainData(trainDataFile, metaDataFile, targetFolder, dsName, maxcount, maxsize, preprocess)
+            mapper.extractAndPackTrainData(trainDataFile, metaDataFile, targetFolder, dsName, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess, filePattern=filePattern)
             
 
 
