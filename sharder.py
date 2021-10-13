@@ -12,7 +12,7 @@ import re
 
 
 def parseOptions(configFile):
-    f = open(configFile,'r');
+    f = open(os.path.expandvars(configFile),'r');
     configOptions = f.readlines();
     f.close()
     dsName = 'Dataset'
