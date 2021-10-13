@@ -17,7 +17,7 @@ import tempfile
 from io import BytesIO as BinaryReader
 
 finalFilePattern = re.compile('.*?([^/]+)/[^/]*\..*')
-     
+
 def getMatch(fileName, pattern):
     res = pattern.match(fileName)
     if res == None:
@@ -153,7 +153,7 @@ class ImageNetMapper(object):
             # ugly since the import packs matlab data into multiple arrays
             self.idmap[x[0][0]] = y[0][0][0]
     
-    def extractAndPackTrainData(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None):
+    def extractAndPackTrainData(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern):
         '''
         Extract a Training data file (assumed to have the following internal structure:
         Train.tar 
@@ -174,7 +174,8 @@ class ImageNetMapper(object):
         maxsize:            Maximum size of each shard(default 3e9)
         preprocess:         A function that takes in an read file and preprocesses the raw data. 
                             NOTE: The data provided to preprocess, is the raw data, if it's an image and you need an image object, 
-                            you have to decode it in the preprocess function. 
+                            you have to decode it in the preprocess function.
+        filePattern:        The pattern used to extract the WNIDs for each element 
 
         '''
 
@@ -183,10 +184,10 @@ class ImageNetMapper(object):
         # build the mapping
         self.createInstanceToClassFromSynsetInfo(metaDataFile)
         # now, Create classes with the mapping
-        buildShardsFromFolder(tmpDir, self.idmap, targetFolder, dsName, filePattern=finalFilePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess)        
+        buildShardsFromFolder(tmpDir, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess)        
             
         
-    def extractAndPackTrainDataInMemory(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None):
+    def extractAndPackTrainDataInMemory(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern):
         '''
         Extract a Training data file (assumed to have the following internal structure:
         Train.tar 
@@ -210,11 +211,12 @@ class ImageNetMapper(object):
         maxsize:            Maximum size of each shard(default 3e9)
         preprocess:         A function that takes in an read file and preprocesses the raw data. 
                             NOTE: The data provided to preprocess, is the raw data, if it's an image and you need an image object, 
-                            you have to decode it in the preprocess function. 
+                            you have to decode it in the preprocess function.
+        filePattern:        The pattern used to extract the WNIDs for each element  
         '''        
         Files = self.readTrainData(trainDataFile,False)
         self.createInstanceToClassFromSynsetInfo(metaDataFile)
-        buildShardsFromSource(Files, self.idmap, targetFolder, dsName, filePattern=finalFilePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess)        
+        buildShardsFromSource(Files, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess)        
 
         #Extract All files to the local tmp directory, placing them in a directory named after the internal .jar File        
 
