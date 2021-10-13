@@ -107,7 +107,7 @@ class ShardTester(unittest.TestCase):
         assert(mapper.idmap['Part4'] == '4')
         
     def test_inMemory(self):
-        outFolder = os.path.join(self.tempFolder.name,'dsOutput')
+        outFolder = os.path.join(self.tempFolder.name,'dsOutput2')
         os.mkdir(outFolder)
         mapper = ImageNetMapper()
         mapper.extractAndPackTrainDataInMemory(os.path.join('Data','Bundle.tar'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
@@ -118,17 +118,24 @@ class ShardTester(unittest.TestCase):
         ImageNetTools.benchmarkIOSpeeds('Data/Bundle_no_tars.tar')
         
     def test_testNonTaredTrain(self):        
-        outFolder = os.path.join(self.tempFolder.name,'dsOutput')
+        outFolder = os.path.join(self.tempFolder.name,'dsOutput3')
         os.mkdir(outFolder)
         mapper = ImageNetMapper()
         mapper.extractAndPackTrainData(os.path.join('Data','Bundle_no_tars.tar'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
         assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
-
+    
     def test_testNonTaredTrain_inMemory(self):        
-        outFolder = os.path.join(self.tempFolder.name,'dsOutput')
+        outFolder = os.path.join(self.tempFolder.name,'dsOutput4')
         os.mkdir(outFolder)
         mapper = ImageNetMapper()
         mapper.extractAndPackTrainDataInMemory(os.path.join('Data','Bundle_no_tars.tar'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
+        assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
+
+    def test_testZippedTrain(self):        
+        outFolder = os.path.join(self.tempFolder.name,'dsOutput5')
+        os.mkdir(outFolder)
+        mapper = ImageNetMapper()
+        mapper.extractAndPackTrainData(os.path.join('Data','Bundle.tar.gz'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
         assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
 
         
