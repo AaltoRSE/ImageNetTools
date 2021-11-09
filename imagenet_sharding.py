@@ -66,7 +66,7 @@ def main(argv):
             except:
                 printHelp()
                 sys.exit(2)
-    ImageNetTools.buildShardsForTrainingDataset(trainDataFile, metaDataFile, targetFolder, dsName, maxcount=maxcount, maxsize=maxsize, inMemory = inMemory, filePattern=filePattern, groundTruthBaseName=groundTruthBaseName)     
+    ImageNetTools.buildShardsForDataset(trainDataFile, metaDataFile, targetFolder, dsName, maxcount=maxcount, maxsize=maxsize, inMemory = inMemory, filePattern=filePattern, groundTruthBaseName=groundTruthBaseName)     
     sys.exit()
    
 def printHelp():

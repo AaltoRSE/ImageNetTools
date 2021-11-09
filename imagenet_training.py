@@ -9,17 +9,13 @@ import shutil
 import time
 import warnings
 
-import torch
 import torch.nn as nn
 import torch.nn.parallel
 import torch.backends.cudnn as cudnn
 import torch.distributed as dist
 import torch.optim
 import torch.multiprocessing as mp
-import torch.utils.data
-import torch.utils.data.distributed
 import torchvision.transforms as transforms
-import torchvision.datasets as datasets
 import torchvision.models as models
 
 import webdataset as wds
@@ -30,9 +26,13 @@ model_names = sorted(name for name in models.__dict__
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 parser.add_argument('traindata', metavar='DIR',
-                    help='path to training data, can either be a single file or a set of Shards indicated in webdataset format (FileXX..YY.tar), with XX being the first and YY the last shard')
+                    help='path to training data, can either be a single file'
+                         'or a set of Shards indicated in webdataset format '
+                         '(FileXX..YY.tar), with XX being the first and YY the last shard')
 parser.add_argument('valdata', metavar='DIR',
-                    help='path to validation data, can either be a single file or a set of Shards indicated in webdataset format (FileXX..YY.tar), with XX being the first and YY the last shard')                    
+                    help='path to validation data, can either be a single file'
+                         'or a set of Shards indicated in webdataset format '
+                         '(FileXX..YY.tar), with XX being the first and YY the last shard')                    
 parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet18',
                     choices=model_names,
                     help='model architecture: ' +
@@ -120,7 +120,6 @@ def main():
         main_worker(args.gpu, ngpus_per_node, args)
 
 
-image_transform = transforms.Compose()
 
 def main_worker(gpu, ngpus_per_node, args):
     global best_acc1
@@ -219,24 +218,15 @@ def main_worker(gpu, ngpus_per_node, args):
                                  transforms.RandomHorizontalFlip(),
                                  transforms.ToTensor(),
                                  normalize])                                 
-    train_dataset = ( wds.WebDataset(trainfile)                         
-                      .decode("rgb")
-                      .to_tuple("jpg","cls")
-                      .map_tuple(image_transformations, lambda x:x)
-                      .shuffle(1000)
-    )
+    train_dataset = wds.WebDataset(trainfile).decode("pil").to_tuple("jpg","cls").map_tuple(image_transformations, lambda x:x).shuffle(1000)    
     
-    if args.distributed:
-        train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
-    else:
-        train_sampler = None
 
     train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=args.batch_size, shuffle=(train_sampler is None),
-        num_workers=args.workers, pin_memory=True, sampler=train_sampler)
+        train_dataset, batch_size=args.batch_size, shuffle=False,
+        num_workers=args.workers, pin_memory=True)
 
     val_dataset = ( wds.WebDataset(valfile)                         
-                      .decode("rgb")
+                      .decode("pil")
                       .to_tuple("jpg","cls")
                       .map_tuple(image_transformations, lambda x:x)
                       .shuffle(1000)
@@ -250,9 +240,7 @@ def main_worker(gpu, ngpus_per_node, args):
         validate(val_loader, model, criterion, args)
         return
 
-    for epoch in range(args.start_epoch, args.epochs):
-        if args.distributed:
-            train_sampler.set_epoch(epoch)
+    for epoch in range(args.start_epoch, args.epochs):       
         adjust_learning_rate(optimizer, epoch, args)
 
         # train for one epoch
@@ -282,16 +270,11 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     losses = AverageMeter('Loss', ':.4e')
     top1 = AverageMeter('Acc@1', ':6.2f')
     top5 = AverageMeter('Acc@5', ':6.2f')
-    progress = ProgressMeter(
-        len(train_loader),
-        [batch_time, data_time, losses, top1, top5],
-        prefix="Epoch: [{}]".format(epoch))
-
     # switch to train mode
     model.train()
 
     end = time.time()
-    for i, (images, target) in enumerate(train_loader):
+    for images, target in train_loader:
         # measure data loading time
         data_time.update(time.time() - end)
 
@@ -317,10 +300,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
         # measure elapsed time
         batch_time.update(time.time() - end)
-        end = time.time()
-
-        if i % args.print_freq == 0:
-            progress.display(i)
+        end = time.time()       
 
 
 def validate(val_loader, model, criterion, args):

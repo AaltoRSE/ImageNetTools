@@ -155,7 +155,7 @@ class ImageNetMapper(object):
     
     
     
-    def extractAndPackTrainData(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, groundTruthBaseName=False):
+    def extractAndPackData(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, groundTruthBaseName=False):
         '''
         Extract a Training data file (assumed to have the following internal structure:
         Train.tar 
@@ -182,7 +182,7 @@ class ImageNetMapper(object):
         '''
 
         #Extract All files to the local tmp directory, placing them in a directory named after the internal .jar File        
-        tmpDir = self.readTrainData(trainDataFile,True)
+        tmpDir = self.readData(trainDataFile,True)
         # build the mapping
         # ground Truth base name only needs to be provided, if it actually is a base name. Otherwise this is an indicator that its 
         if not groundTruthBaseName:
@@ -195,7 +195,7 @@ class ImageNetMapper(object):
         buildShardsFromFolder(tmpDir, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess)        
             
         
-    def extractAndPackTrainDataInMemory(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, metaIsSynset=True, groundTruthBaseName=False):
+    def extractAndPackDataInMemory(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, metaIsSynset=True, groundTruthBaseName=False):
         '''
         Extract a Training data file (assumed to have the following internal structure:
         Train.tar 
@@ -222,7 +222,7 @@ class ImageNetMapper(object):
                             you have to decode it in the preprocess function.
         filePattern:        The pattern used to extract the WNIDs for each element  
         '''        
-        Files = self.readTrainData(trainDataFile,False)
+        Files = self.readData(trainDataFile,False)
         if not groundTruthBaseName:
             self.createInstanceToClassFromSynsetInfo(metaDataFile)
         else:
@@ -235,7 +235,7 @@ class ImageNetMapper(object):
         #Extract All files to the local tmp directory, placing them in a directory named after the internal .jar File        
 
 
-    def readTrainData(self, trainDataFile, toDisk):
+    def readData(self, trainDataFile, toDisk):
         '''
         Read in the data from a training data set of imagemap. Training data is assumed to be in a 
         tar file, either as individual images, or again as tar files 
@@ -316,7 +316,7 @@ class ImageNetMapper(object):
         groundTruth = open(groundTruthFile);
         cline = groundTruth.readline()
         while cline !='':
-            cclass = cline;
+            cclass = cline.strip();
             self.idmap[baseName + "%08d" % i + ".JPEG"] = cclass
             cline = groundTruth.readline();
             i+=1                
