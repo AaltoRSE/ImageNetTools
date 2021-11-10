@@ -218,17 +218,19 @@ def main_worker(gpu, ngpus_per_node, args):
                                  transforms.RandomHorizontalFlip(),
                                  transforms.ToTensor(),
                                  normalize])                                 
-    train_dataset = wds.WebDataset(trainfile).decode("pil").to_tuple("jpg","cls").map_tuple(image_transformations, lambda x:x).shuffle(1000)    
+    # We need to map the class labels, since the criterion works from 0 to num(classes)-1
+    train_dataset = wds.WebDataset(trainfile).decode("pil").to_tuple("jpg","cls").map_tuple(image_transformations, lambda x:int(x)-1).shuffle(1000)    
     
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=False,
         num_workers=args.workers, pin_memory=True)
 
+    # We need to map the class labels, since the criterion works from 0 to num(classes)-1
     val_dataset = ( wds.WebDataset(valfile)                         
                       .decode("pil")
                       .to_tuple("jpg","cls")
-                      .map_tuple(image_transformations, lambda x:x)
+                      .map_tuple(image_transformations, lambda x:int(x)-1)
                       .shuffle(1000)
     )
     val_loader = torch.utils.data.DataLoader(
@@ -282,7 +284,6 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             images = images.cuda(args.gpu, non_blocking=True)
         if torch.cuda.is_available():
             target = target.cuda(args.gpu, non_blocking=True)
-
         # compute output
         output = model(images)
         loss = criterion(output, target)
@@ -308,10 +309,10 @@ def validate(val_loader, model, criterion, args):
     losses = AverageMeter('Loss', ':.4e')
     top1 = AverageMeter('Acc@1', ':6.2f')
     top5 = AverageMeter('Acc@5', ':6.2f')
-    progress = ProgressMeter(
-        len(val_loader),
-        [batch_time, losses, top1, top5],
-        prefix='Test: ')
+#    progress = ProgressMeter(
+#        len(val_loader),
+#        [batch_time, losses, top1, top5],
+#        prefix='Test: ')
 
     # switch to evaluate mode
     model.eval()
@@ -338,8 +339,8 @@ def validate(val_loader, model, criterion, args):
             batch_time.update(time.time() - end)
             end = time.time()
 
-            if i % args.print_freq == 0:
-                progress.display(i)
+ #           if i % args.print_freq == 0:
+ #               progress.display(i)
 
         # TODO: this should also be done with the ProgressMeter
         print(' * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}'
@@ -407,7 +408,6 @@ def accuracy(output, target, topk=(1,)):
     with torch.no_grad():
         maxk = max(topk)
         batch_size = target.size(0)
-
         _, pred = output.topk(maxk, 1, True, True)
         pred = pred.t()
         correct = pred.eq(target.view(1, -1).expand_as(pred))
