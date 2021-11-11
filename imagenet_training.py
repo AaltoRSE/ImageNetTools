@@ -15,7 +15,6 @@ import torch.backends.cudnn as cudnn
 import torch.distributed as dist
 import torch.optim
 import torch.multiprocessing as mp
-import torchvision.transforms as transforms
 import torchvision.models as models
 
 from ImageNetTools import default_transformations as image_transformations
