@@ -18,6 +18,8 @@ import torch.multiprocessing as mp
 import torchvision.transforms as transforms
 import torchvision.models as models
 
+from ImageNetTools import default_transformations as image_transformations
+
 import webdataset as wds
 
 model_names = sorted(name for name in models.__dict__
@@ -46,9 +48,9 @@ parser.add_argument('--epochs', default=90, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('-b', '--batch-size', default=256, type=int,
+parser.add_argument('-b', '--batch-size', default=32, type=int,
                     metavar='N',
-                    help='mini-batch size (default: 256), this is the total '
+                    help='mini-batch size (default: 32), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
 parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
@@ -211,14 +213,7 @@ def main_worker(gpu, ngpus_per_node, args):
     # Data loading code
     trainfile = args.traindata
     valfile = args.valdata
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     std=[0.229, 0.224, 0.225])
-
-    image_transformations = transforms.Compose([
-                                 transforms.RandomResizedCrop(224),
-                                 transforms.RandomHorizontalFlip(),
-                                 transforms.ToTensor(),
-                                 normalize])                                 
+                              
     # We need to map the class labels, since the criterion works from 0 to num(classes)-1
     train_dataset = wds.WebDataset(trainfile).decode("pil").to_tuple("jpg","cls").map_tuple(image_transformations, lambda x:int(x)-1).shuffle(1000)    
     

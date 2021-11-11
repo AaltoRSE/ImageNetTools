@@ -10,6 +10,7 @@ from .IOTesters import pureWDSRead
 from .IOTesters import copyAndLoad 
 from .IOTesters import wdsWithWorkers 
 from .IOTesters import wdsWithWorkersAndBatches  
+from .imageNetTransformations import image_transformations as default_transformations
 
 def buildShardsForTrainingDataset(trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, inMemory = False, filePattern=None, groundTruthBaseName=None):
         mapper = ImageNetMapper();
