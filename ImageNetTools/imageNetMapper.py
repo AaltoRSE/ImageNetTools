@@ -26,7 +26,7 @@ def getMatch(fileName, pattern):
         return res.groups()[0]  
         
         
-def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName, filePattern = None, maxcount=100000, maxsize=3e9, preprocess = None):
+def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName, filePattern = None, maxcount=100000, maxsize=3e9, preprocess = None, clearTempFolderfromName = False):
     '''
     Build shards from a folder with image files and a given translation table between images and associated classes.
     
@@ -67,7 +67,10 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
             if data[1] != None:                         
                 with open(data[0],'rb') as stream:
                     binary_data =stream.read()        
-                sample = getSample(fileToClass, data, preprocess, binary_data)                    
+                sample = getSample(fileToClass, data, preprocess, binary_data)
+                if clearTempFolderfromName:
+                    # remove the temporary folder from the sample key 
+                    sample['__key__'] = sample['__key__'].replace(fileFolder,'')                    
                 writer.write(sample)
                                 
 
@@ -192,7 +195,7 @@ class ImageNetMapper(object):
             #No pattern, since we use ground-truthes.            
             filePattern = re.compile('.*?[^/]*?/?([^/]*\..*)')
         # now, Create classes with the mapping
-        buildShardsFromFolder(tmpDir, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess)        
+        buildShardsFromFolder(tmpDir, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess, clearTempFolderfromName=True)        
             
         
     def extractAndPackDataInMemory(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, metaIsSynset=True, groundTruthBaseName=False):

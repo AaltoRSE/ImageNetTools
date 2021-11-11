@@ -96,7 +96,7 @@ class ShardTester(unittest.TestCase):
         outFolder = os.path.join(self.tempFolder.name,'dsOutput')
         os.mkdir(outFolder)
         mapper = ImageNetMapper()
-        mapper.extractAndPackTrainData(os.path.join('Data','Bundle.tar'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
+        mapper.extractAndPackData(os.path.join('Data','Bundle.tar'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
         assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
         #For now, we won't test contents (as that's tested elsewhere.
 
@@ -110,7 +110,7 @@ class ShardTester(unittest.TestCase):
         outFolder = os.path.join(self.tempFolder.name,'dsOutput')
         os.mkdir(outFolder)
         mapper = ImageNetMapper()
-        mapper.extractAndPackTrainDataInMemory(os.path.join('Data','Bundle.tar'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
+        mapper.extractAndPackDataInMemory(os.path.join('Data','Bundle.tar'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
         assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
         #For now, we won't test contents (as that's tested elsewhere.
         
@@ -121,28 +121,28 @@ class ShardTester(unittest.TestCase):
         outFolder = os.path.join(self.tempFolder.name,'dsOutput')
         os.mkdir(outFolder)
         mapper = ImageNetMapper()
-        mapper.extractAndPackTrainData(os.path.join('Data','Bundle_no_tars.tar'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
+        mapper.extractAndPackData(os.path.join('Data','Bundle_no_tars.tar'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
         assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
     
     def test_testNonTaredTrain_inMemory(self):        
         outFolder = os.path.join(self.tempFolder.name,'dsOutput')
         os.mkdir(outFolder)
         mapper = ImageNetMapper()
-        mapper.extractAndPackTrainDataInMemory(os.path.join('Data','Bundle_no_tars.tar'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
+        mapper.extractAndPackDataInMemory(os.path.join('Data','Bundle_no_tars.tar'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
         assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
 
     def test_testZippedTrain(self):        
         outFolder = os.path.join(self.tempFolder.name,'dsOutput')
         os.mkdir(outFolder)
         mapper = ImageNetMapper()
-        mapper.extractAndPackTrainData(os.path.join('Data','Bundle.tar.gz'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
+        mapper.extractAndPackData(os.path.join('Data','Bundle.tar.gz'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
         assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
 
     def test_testgroundTruth(self):        
         outFolder = os.path.join(self.tempFolder.name,'dsOutput')
         os.mkdir(outFolder)
         mapper = ImageNetMapper()
-        mapper.extractAndPackTrainData(os.path.join('Data','ValTest.tar'),os.path.join('Data','groundTruth.txt'),outFolder,'TestSet',maxcount=3, groundTruthBaseName='Pic')
+        mapper.extractAndPackData(os.path.join('Data','ValTest.tar'),os.path.join('Data','groundTruth.txt'),outFolder,'TestSet',maxcount=3, groundTruthBaseName='Pic')
         assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
 
 
@@ -150,7 +150,7 @@ class ShardTester(unittest.TestCase):
         outFolder = os.path.join(self.tempFolder.name,'dsOutput')
         os.mkdir(outFolder)
         mapper = ImageNetMapper()
-        mapper.extractAndPackTrainDataInMemory(os.path.join('Data','ValTest.tar'),os.path.join('Data','groundTruth.txt'),outFolder,'TestSet',maxcount=3, groundTruthBaseName='Pic')
+        mapper.extractAndPackDataInMemory(os.path.join('Data','ValTest.tar'),os.path.join('Data','groundTruth.txt'),outFolder,'TestSet',maxcount=3, groundTruthBaseName='Pic')
         assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
 
         
