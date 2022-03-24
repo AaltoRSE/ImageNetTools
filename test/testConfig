@@ -1,0 +1,9 @@
+{
+"dataFile" : "../ImageNetTools/test/Data/Bundle.tar",
+"metaDataFile" : "../ImageNetTools/test/Data/meta.mat",
+"targetFolder" : "testOutput",
+"datasetName" : "INValidation",
+"maxcount" : 3,
+"maxsize" : 3e9,
+"inMemory" : "False"
+}
