@@ -1,0 +1,9 @@
+dataFile=/scratch/shareddata/dldata/imagenet/imagenet21k_resized.tar.gz                         # Preprocessed data from imagenet
+# uncomment the next line and comment the line above if you want to use the original, not pre-processed imagenet data
+#dataFile=/scratch/shareddata/dldata/imagenet/ILSVRC2012_img_train.tar                          # Preprocessed data from imagenet
+metaDataFile=/scratch/shareddata/dldata/imagenet/ILSVRC2012_devkit_t12/data/meta.mat            # The path to the metaData file')
+targetFolder=$WRKDIR/ImageNetShards                                                             # Default output is your Work Directory      
+dsName=ImageNetShards                                                                           # The Base name of the output shards')
+maxcount=10000                                                                                  # Maximium number of files per shard')
+maxsize=3e9                                                                                     # Maximium size per shard')
+inMemory=False                                                                                  # Whether sharding should be performed entirely in memory')  

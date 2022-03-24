@@ -15,11 +15,14 @@ def parseOptions(configFile):
     f = open(os.path.expandvars(configFile),'r');
     configOptions = f.readlines();
     f.close()
-    dsName = 'Dataset'
+    dsName = 'ImageNetShards'
     maxcount=100000
     maxsize=3e9
     inMemory = False
     filePattern = ImageNetTools.imageNetMapper.finalFilePattern
+    targetFolder =  os.path.expandvars('$WRKDIR/ImageNetShards');
+    trainDataFile =  os.path.expandvars('/scratch/shareddata/dldata/imagenet/imagenet21k_resized.tar.gz');
+    metaDataFile =  os.path.expandvars('/scratch/shareddata/dldata/imagenet/ILSVRC2012_devkit_t12/data/meta.mat');
     groundTruthBaseName = False
     for option in configOptions:
         #Remove comments
@@ -50,12 +53,14 @@ def parseOptions(configFile):
             filePattern = re.compile(optionValue)           
         elif optionName == 'groundTruthBaseName':
             groundTruthBaseName = optionValue   
+            if groundTruthBaseName == "":
+                groundTruthBaseName = False;
                          
     return trainDataFile, metaDataFile, targetFolder, dsName, maxcount, maxsize, inMemory, filePattern, groundTruthBaseName       
         
 def main(argv):
     try:
-        opts, args = getopt.getopt(argv,"hc:",["conf="])
+        opts = getopt.getopt(argv,"hc:",["conf="])
     except getopt.GetoptError:
         printHelp()
         sys.exit(2)
@@ -84,7 +89,9 @@ def printHelp():
     print('maxcount=100000                      # Maximium number of files per shard')
     print('maxsize=3e9                          # Maximium size per shard')
     print('inMemory=False                       # Whether sharding should be performed entirely in memory')
-    print('groundTruthBaseName=ILSVRC2012_val_  # The base name for a ground truth file to add the ID to (normally validation)')  
+    print('groundTruthBaseName=                 # The base name for a ground truth file to add the ID to (normally validation)')
+    print('                                     # If not present or left empty, it wont be used. Should not be given for training data')    
+
     
     
     
