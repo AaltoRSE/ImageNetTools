@@ -15,6 +15,7 @@ from math import ceil, log10
 import tarfile
 import tempfile
 from io import BytesIO as BinaryReader
+import json
 
 finalFilePattern = re.compile('.*?([^/]+)/[^/]*\..*')
 
@@ -143,21 +144,48 @@ class ImageNetMapper(object):
     def createInstanceToClassFromSynsetInfo(self,imageNetMetaFile):
         '''
         create Instance to class mapping from a meta.mat file containing the mapping between 
-        WNIDs and imagenet classes.
+        WNIDs and imagenet classes. (for imagenet), or using a json file with "ID" : class otherwise.
         
         Parameters:
         imageNetMetaFile:   The meta.mat file from imagenet containing the synsets struct with ILSVRC2021_ID and WNID fields.
         '''
-        mapfile = sciio.loadmat(imageNetMetaFile)
-        sets = mapfile['synsets']
-        self.idmap = {};
-        # get the mapping between WNID and ImageNetIDs        
-        for x,y in zip(sets['WNID'],sets['ILSVRC2012_ID']):
-            # ugly since the import packs matlab data into multiple arrays
-            self.idmap[x[0][0]] = y[0][0][0]
+        if(imageNetMetaFile.endswith(".mat")):
+            mapfile = sciio.loadmat(imageNetMetaFile)
+            sets = mapfile['synsets']
+            self.idmap = {};
+            # get the mapping between WNID and ImageNetIDs        
+            for x,y in zip(sets['WNID'],sets['ILSVRC2012_ID']):
+                # ugly since the import packs matlab data into multiple arrays
+                self.idmap[x[0][0]] = y[0][0][0]
+        else:
+            with open(imageNetMetaFile, 'r') as f:
+                self.idmap = json.load(f)
+            
     
-    
-    
+    def shardDataFolder(self, trainFolder, metaDataFile,targetFolder, dsName,maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, groundTruthBaseName=False):
+        '''
+        Read in data from a folder, using either a metaDataFile 
+        and build randomized shards from it, including labels.
+        
+        Parameters:
+        trainDataFile:      The location of the training data file
+        metaDataFile:       The location of the metaData .mat file to build the mapping
+        targetFolder:       The output folder (optimally network space)
+        dsName:             Base name of the output ffiles (The resulting sharded DS will be stored as dsname000X..XXXX.tar)
+               
+        Optional Parameters:
+        maxcount:           Maximum number of files within one shard (default 100000)
+        maxsize:            Maximum size of each shard(default 3e9)
+        preprocess:         A function that takes in an read file and preprocesses the raw data. 
+                            NOTE: The data provided to preprocess, is the raw data, if it's an image and you need an image object, 
+                            you have to decode it in the preprocess function.
+        filePattern:        The pattern used to extract the WNIDs for each element 
+
+        '''
+        
+        pass
+        
+        
     def extractAndPackData(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, groundTruthBaseName=False):
         '''
         Extract a Training data file (assumed to have the following internal structure:
