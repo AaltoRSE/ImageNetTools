@@ -62,8 +62,7 @@ class ShardTester(unittest.TestCase):
             assert len(batch["__key__"])>= 1 # we can't make a stronger assertion here.
             for key in batch['__key__']:
                 assert key in pictureNames
-                pictureNames.remove(key)            
-                        
+                pictureNames.remove(key)                                    
         assert len(pictureNames) == 0   
     
     def test_ShardProcessing(self):
