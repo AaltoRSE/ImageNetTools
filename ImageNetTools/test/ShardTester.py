@@ -91,6 +91,8 @@ class ShardTester(unittest.TestCase):
                         
         assert len(fileBases) == 0
             
+    
+            
     def test_DatasetMapping(self):
         outFolder = os.path.join(self.tempFolder.name,'dsOutput')
         os.mkdir(outFolder)

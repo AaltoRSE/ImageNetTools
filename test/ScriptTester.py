@@ -1,6 +1,7 @@
 from dataset_sharding import parse_args
 from dataset_sharding import main as shard
 import imageNetProvider  
+import json
 import unittest
 import tempfile 
 import os
@@ -22,10 +23,10 @@ class ScriptTester(unittest.TestCase):
         commandlineArgs = "--conf testConfig -x 2"
         args = parse_args(commandlineArgs.split())
         assert args.maxcount == 2
-        assert args.dataFile == "../ImageNetTools/test/Data/Bundle.tar"
+        assert args.dataSource == "../ImageNetTools/test/Data/Bundle.tar"
     
-    def test_shard_main(self):
-        commandlineArgs = "--conf testConfig -x 2"
+    def test_shard_Tar(self):
+        commandlineArgs = "--conf testConfig -x 2 -r .*?([^/]+)/[^/]*\..*"
         args = parse_args(commandlineArgs.split())    
         shard(commandlineArgs.split())
         filesInTempFolder = os.listdir(args.targetFolder)
@@ -47,4 +48,30 @@ class ScriptTester(unittest.TestCase):
                 del pictureNames[key]  
                                                   
         assert len(pictureNames) == 0 
+
+    def test_shard_Folder(self):
+        commandlineArgs = "--conf testConfig -x 2 -d ../ImageNetTools/test/Data/Images -m ClassInfo.json"
+        args = parse_args(commandlineArgs.split())    
+        shard(commandlineArgs.split())
+        filesInTempFolder = os.listdir(args.targetFolder)
+        assert len(filesInTempFolder) == 6 # we have 11 files those go into 6 nw files as a max of 2 files is permitted. 
+        for file in filesInTempFolder:
+            assert file.startswith(args.datasetName)
         
+        #Now, test the contents.
+        # Since the pictures came from Part1.tars, these will be kept in the key.
+        with open('ClassInfo.json','r') as f:
+            res = json.load(f) 
+            pictureNames = { n.replace('.JPEG','') : res[n] for n in res} 
+        shardNames = os.path.join('testOutput',"INValidation{0..5}.tar")
+        ds = wds(shardNames);
+        loader = DataLoader(ds)
+        for batch in loader:
+            assert len(batch["__key__"])>= 1 # we can't make a stronger assertion here.
+            for key,cls in zip(batch['__key__'],batch['cls']):
+                assert key in pictureNames
+                assert cls.decode() == pictureNames[key]
+                del pictureNames[key]  
+                                                  
+        assert len(pictureNames) == 0 
+            

@@ -48,11 +48,12 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
     '''
     
     res = []     
-    Files = [os.fspath(f) for f in pathlib.Path(fileFolder).rglob('*.*')]
+    Files = [f for f in pathlib.Path(fileFolder).rglob('*.*')]    
     if filePattern == None:
-        res = [(fname, fname) for fname in Files]
+        res = [(os.fspath(fname), os.fspath(fname.relative_to(fileFolder))) for fname in Files]
     else:             
-        res = [(fname, getMatch(fname,filePattern)) for fname in Files]
+        filePattern = re.compile(filePattern);
+        res = [(os.fspath(fname), getMatch(fname.relative_to(fileFolder),filePattern)) for fname in Files]
                 
     #get an appropriate length of Shard Names
     perm = np.random.permutation(len(res))
@@ -101,6 +102,7 @@ def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, file
     if filePattern == None:
         res = [(fname, fname) for fname in Files]
     else:             
+        filePattern = re.compile(filePattern);
         res = [(fname, getMatch(fname,filePattern)) for fname in Files]            
     #get an appropriate length of Shard Names
     perm = np.random.permutation(len(res))
@@ -119,7 +121,7 @@ def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, file
 def getSample(fileToClass, data, preprocess, binary_data):
     file = data[0]
     fileclass = fileToClass[data[1]]
-    key = os.path.splitext(file)[0]
+    key = os.path.splitext(data[1])[0]
     if not preprocess == None:
         binary_data = preprocess(binary_data)         
     sample = {"__key__": key,
@@ -162,13 +164,13 @@ class ImageNetMapper(object):
                 self.idmap = json.load(f)
             
     
-    def shardDataFolder(self, trainFolder, metaDataFile,targetFolder, dsName,maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, groundTruthBaseName=False):
+    def shardDataFolder(self, dataFolder, metaDataFile,targetFolder, dsName,maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, groundTruthBaseName=False):
         '''
         Read in data from a folder, using either a metaDataFile 
         and build randomized shards from it, including labels.
         
         Parameters:
-        trainDataFile:      The location of the training data file
+        dataFolder:         The location of the data files
         metaDataFile:       The location of the metaData .mat file to build the mapping
         targetFolder:       The output folder (optimally network space)
         dsName:             Base name of the output ffiles (The resulting sharded DS will be stored as dsname000X..XXXX.tar)
@@ -182,8 +184,15 @@ class ImageNetMapper(object):
         filePattern:        The pattern used to extract the WNIDs for each element 
 
         '''
+        if not groundTruthBaseName:
+            self.createInstanceToClassFromSynsetInfo(metaDataFile)
+        else:
+            self.createInstanceToClassFromGroundTruth(metaDataFile, groundTruthBaseName)
+            #No pattern, since we use ground-truthes.            
+            filePattern = re.compile('.*?[^/]*?/?([^/]*\..*)')
         
-        pass
+        buildShardsFromFolder(dataFolder, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess, clearTempFolderfromName=True)
+        
         
         
     def extractAndPackData(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, groundTruthBaseName=False):
