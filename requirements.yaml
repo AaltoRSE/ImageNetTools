@@ -1,0 +1,12 @@
+name: shardProcess
+channels:
+  - conda-forge
+  - pytorch
+dependencies:
+  - pytorch
+  - torchvision
+  - scipy
+  - numpy  
+  - pip
+  - pip:
+    - webdataset

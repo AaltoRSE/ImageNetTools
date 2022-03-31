@@ -5,7 +5,7 @@ Created on Sep 7, 2021
 '''
 from multiprocessing import Process, Queue
 from torch.utils.data import IterableDataset
-from imageNetMemory import imageNetMemory
+from .imageNetMemory import imageNetMemory
 from operator import itemgetter
 
 def startImageMemory(pushQueue, waitQueue, imageNetFiles, batchSize=1000, labels = []):

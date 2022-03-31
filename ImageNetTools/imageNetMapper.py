@@ -5,19 +5,22 @@ Created on Sep 10, 2021
 '''
 
 import os 
-import pathlib
-import scipy.io as sciio
-import webdataset as wds
-from webdataset.writer import ShardWriter as SW
 import re
-import numpy as np
+import pathlib
 from math import ceil, log10
-import tarfile
 import tempfile
-from io import BytesIO as BinaryReader
 import json
 
-finalFilePattern = re.compile('.*?([^/]+)/[^/]*\..*')
+import scipy.io as sciio
+import numpy as np
+
+import tarfile
+from io import BytesIO as BinaryReader
+import webdataset as wds
+from webdataset.writer import ShardWriter as SW
+
+
+finalFilePattern = '.*?([^/]+)/[^/]*\..*'
 
 def getMatch(fileName, pattern):
     res = pattern.match(fileName)
@@ -27,7 +30,7 @@ def getMatch(fileName, pattern):
         return res.groups()[0]  
         
         
-def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName, filePattern = None, maxcount=100000, maxsize=3e9, preprocess = None, clearTempFolderfromName = False):
+def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName, filePattern = None, maxcount=100000, maxsize=3e9, preprocess = None, dataType = ".jpg"):
     '''
     Build shards from a folder with image files and a given translation table between images and associated classes.
     
@@ -50,10 +53,10 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
     res = []     
     Files = [f for f in pathlib.Path(fileFolder).rglob('*.*')]    
     if filePattern == None:
-        res = [(os.fspath(fname), os.fspath(fname.relative_to(fileFolder))) for fname in Files]
+        res = [(os.fspath(fname), os.path.splitext(os.fspath(fname.relative_to(fileFolder)))[0], os.fspath(fname.relative_to(fileFolder))) for fname in Files]
     else:             
         filePattern = re.compile(filePattern);
-        res = [(os.fspath(fname), getMatch(fname.relative_to(fileFolder),filePattern)) for fname in Files]
+        res = [(os.fspath(fname), os.path.splitext(os.fspath(fname.relative_to(fileFolder)))[0], getMatch(os.fspath(fname.relative_to(fileFolder)),filePattern)) for fname in Files]
                 
     #get an appropriate length of Shard Names
     perm = np.random.permutation(len(res))
@@ -69,14 +72,11 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
             if data[1] != None:                         
                 with open(data[0],'rb') as stream:
                     binary_data =stream.read()        
-                sample = getSample(fileToClass, data, preprocess, binary_data)
-                if clearTempFolderfromName:
-                    # remove the temporary folder from the sample key 
-                    sample['__key__'] = sample['__key__'].replace(fileFolder,'')                    
+                sample = getSample(data[1], fileToClass[data[2]], preprocess, binary_data, dataType)                                 
                 writer.write(sample)
                                 
 
-def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, filePattern = None, maxcount=100000, maxsize=3e9, preprocess = None):
+def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, filePattern = None, maxcount=100000, maxsize=3e9, preprocess = None, dataType = "jpg"):
     '''
     Build shuffled shards from a source tar file keeping all elements in memory. 
     This function can easily fail if insufficient memory is allocated. 
@@ -100,10 +100,10 @@ def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, file
     res = []
     #Open the tarfile as stream.     
     if filePattern == None:
-        res = [(fname, fname) for fname in Files]
+        res = [(fname,os.path.splitext(fname)[0], fname) for fname in Files]
     else:             
         filePattern = re.compile(filePattern);
-        res = [(fname, getMatch(fname,filePattern)) for fname in Files]            
+        res = [(fname, os.path.splitext(fname)[0], getMatch(fname,filePattern)) for fname in Files]            
     #get an appropriate length of Shard Names
     perm = np.random.permutation(len(res))
     numFileLength = str(ceil(log10(len(perm)/maxcount)))
@@ -114,19 +114,17 @@ def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, file
             data = res[i]            
             if data[1] != None:
                 binary_data = Files[data[0]]                         
-                sample = getSample(fileToClass, data, preprocess, binary_data)                    
+                sample = getSample(data[1], fileToClass[data[2]], preprocess, binary_data, dataType)                    
                 writer.write(sample)
                                 
                                 
-def getSample(fileToClass, data, preprocess, binary_data):
-    file = data[0]
-    fileclass = fileToClass[data[1]]
-    key = os.path.splitext(data[1])[0]
+def getSample(key, keyClass, preprocess, binary_data, dataType):        
+    # Take only the base file name, the type and class will be added by the shardwriter
     if not preprocess == None:
         binary_data = preprocess(binary_data)         
     sample = {"__key__": key,
-                  "jpg": binary_data,
-                  "cls": fileclass}
+                  dataType : binary_data,
+                  "cls": str(keyClass)} # Metadata must be of type strring according to webdataset definitions
     return sample
     
     
@@ -191,7 +189,7 @@ class ImageNetMapper(object):
             #No pattern, since we use ground-truthes.            
             filePattern = re.compile('.*?[^/]*?/?([^/]*\..*)')
         
-        buildShardsFromFolder(dataFolder, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess, clearTempFolderfromName=True)
+        buildShardsFromFolder(dataFolder, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess)
         
         
         
@@ -230,9 +228,9 @@ class ImageNetMapper(object):
         else:
             self.createInstanceToClassFromGroundTruth(metaDataFile, groundTruthBaseName)
             #No pattern, since we use ground-truthes.            
-            filePattern = re.compile('.*?[^/]*?/?([^/]*\..*)')
+            filePattern = '.*?[^/]*?/?([^/]*\..*)'
         # now, Create classes with the mapping
-        buildShardsFromFolder(tmpDir, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess, clearTempFolderfromName=True)        
+        buildShardsFromFolder(tmpDir, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess)        
             
         
     def extractAndPackDataInMemory(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, metaIsSynset=True, groundTruthBaseName=False):

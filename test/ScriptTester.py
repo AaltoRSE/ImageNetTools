@@ -1,6 +1,5 @@
 from dataset_sharding import parse_args
 from dataset_sharding import main as shard
-import imageNetProvider  
 import json
 import unittest
 import tempfile 
@@ -23,7 +22,7 @@ class ScriptTester(unittest.TestCase):
         commandlineArgs = "--conf testConfig -x 2"
         args = parse_args(commandlineArgs.split())
         assert args.maxcount == 2
-        assert args.dataSource == "../ImageNetTools/test/Data/Bundle.tar"
+        assert args.dataSource == "../ImageNetTools/tests/Data/Bundle.tar"
     
     def test_shard_Tar(self):
         commandlineArgs = "--conf testConfig -x 2 -r .*?([^/]+)/[^/]*\..*"
@@ -50,14 +49,13 @@ class ScriptTester(unittest.TestCase):
         assert len(pictureNames) == 0 
 
     def test_shard_Folder(self):
-        commandlineArgs = "--conf testConfig -x 2 -d ../ImageNetTools/test/Data/Images -m ClassInfo.json"
+        commandlineArgs = "--conf testConfig -x 2 -d ../ImageNetTools/tests/Data/Images -m ClassInfo.json"
         args = parse_args(commandlineArgs.split())    
         shard(commandlineArgs.split())
         filesInTempFolder = os.listdir(args.targetFolder)
         assert len(filesInTempFolder) == 6 # we have 11 files those go into 6 nw files as a max of 2 files is permitted. 
         for file in filesInTempFolder:
             assert file.startswith(args.datasetName)
-        
         #Now, test the contents.
         # Since the pictures came from Part1.tars, these will be kept in the key.
         with open('ClassInfo.json','r') as f:
@@ -70,7 +68,7 @@ class ScriptTester(unittest.TestCase):
             assert len(batch["__key__"])>= 1 # we can't make a stronger assertion here.
             for key,cls in zip(batch['__key__'],batch['cls']):
                 assert key in pictureNames
-                assert cls.decode() == pictureNames[key]
+                assert cls.decode() == str(pictureNames[key])
                 del pictureNames[key]  
                                                   
         assert len(pictureNames) == 0 

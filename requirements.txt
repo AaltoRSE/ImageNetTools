@@ -1,9 +1,0 @@
-torch
-torchvision
-webdataset
-scipy
-numpy
-tempfile
-multiprocessing
-operator
-shutil
