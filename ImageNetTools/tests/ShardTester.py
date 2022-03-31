@@ -4,14 +4,13 @@ Created on Sep 14, 2021
 @author: thomas
 '''
 #import src for tests
-from imageNetMapper import ImageNetMapper
 
+
+from ImageNetTools import imageNetMapper, imageNetProvider
 import unittest
-import imageNetMapper
 import os
 import numpy.random as random
 import tempfile
-import imageNetProvider 
 import importlib
 from torch.utils.data import DataLoader
 import ImageNetTools
@@ -31,7 +30,7 @@ class ShardTester(unittest.TestCase):
         imageFolder = os.path.join('Data','Images');
         files = os.listdir(imageFolder)        
         classes = random.permutation(len(files))
-        mapping = {os.path.join(imageFolder,x) : y for (x,y) in zip(files,classes)}      
+        mapping = {x : y for (x,y) in zip(files,classes)}      
         imageNetMapper.buildShardsFromFolder(os.path.join('Data','Images'), mapping, self.tempFolder.name, 'Shards', maxcount=3)        
         filesInTempFolder = os.listdir(self.tempFolder.name)
         assert len(filesInTempFolder) == 4
@@ -69,7 +68,7 @@ class ShardTester(unittest.TestCase):
         imageFolder = os.path.join('Data','Images');
         files = os.listdir(imageFolder)        
         classes = random.permutation(len(files))
-        mapping = {os.path.join(imageFolder,x) : y for (x,y) in zip(files,classes)}
+        mapping = {x : y for (x,y) in zip(files,classes)}
         
         imageNetMapper.buildShardsFromFolder(os.path.join('Data','Images'), mapping, self.tempFolder.name, 'Shards', maxcount=3)
         
@@ -78,7 +77,7 @@ class ShardTester(unittest.TestCase):
         for file in filesInTempFolder:
             assert file.startswith('Shards')            
         # Thats writing the shards done. Now read them
-        fileBases = {os.path.join(imageFolder,os.path.splitext(file)[0]) for file in files}
+        fileBases = {os.path.splitext(file)[0] for file in files}
         shardNames = os.path.join(self.tempFolder.name,"Shards{0..3}.tar")
         prov = imageNetProvider.imageNetProvider(shardNames, 2);
         loader = DataLoader(prov,batch_size=2)
@@ -96,13 +95,13 @@ class ShardTester(unittest.TestCase):
     def test_DatasetMapping(self):
         outFolder = os.path.join(self.tempFolder.name,'dsOutput')
         os.mkdir(outFolder)
-        mapper = ImageNetMapper()
+        mapper = imageNetMapper.ImageNetMapper()
         mapper.extractAndPackData(os.path.join('Data','Bundle.tar'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
         assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
         #For now, we won't test contents (as that's tested elsewhere.
 
     def test_Mapping(self):
-        mapper = ImageNetMapper()
+        mapper = imageNetMapper.ImageNetMapper()
         mapper.createInstanceToClassFromSynsetInfo(os.path.join('Data','meta.mat'));
         assert(mapper.idmap['Part1'] == '1')
         assert(mapper.idmap['Part4'] == '4')
@@ -110,7 +109,7 @@ class ShardTester(unittest.TestCase):
     def test_inMemory(self):
         outFolder = os.path.join(self.tempFolder.name,'dsOutput')
         os.mkdir(outFolder)
-        mapper = ImageNetMapper()
+        mapper = imageNetMapper.ImageNetMapper()
         mapper.extractAndPackDataInMemory(os.path.join('Data','Bundle.tar'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
         assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
         #For now, we won't test contents (as that's tested elsewhere.
@@ -121,28 +120,28 @@ class ShardTester(unittest.TestCase):
     def test_testNonTaredTrain(self):        
         outFolder = os.path.join(self.tempFolder.name,'dsOutput')
         os.mkdir(outFolder)
-        mapper = ImageNetMapper()
+        mapper = imageNetMapper.ImageNetMapper()
         mapper.extractAndPackData(os.path.join('Data','Bundle_no_tars.tar'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
         assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
     
     def test_testNonTaredTrain_inMemory(self):        
         outFolder = os.path.join(self.tempFolder.name,'dsOutput')
         os.mkdir(outFolder)
-        mapper = ImageNetMapper()
+        mapper = imageNetMapper.ImageNetMapper()
         mapper.extractAndPackDataInMemory(os.path.join('Data','Bundle_no_tars.tar'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
         assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
 
     def test_testZippedTrain(self):        
         outFolder = os.path.join(self.tempFolder.name,'dsOutput')
         os.mkdir(outFolder)
-        mapper = ImageNetMapper()
+        mapper = imageNetMapper.ImageNetMapper()
         mapper.extractAndPackData(os.path.join('Data','Bundle.tar.gz'),os.path.join('Data','meta.mat'),outFolder,'TestSet',maxcount=3 )
         assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
 
     def test_testgroundTruth(self):        
         outFolder = os.path.join(self.tempFolder.name,'dsOutput')
         os.mkdir(outFolder)
-        mapper = ImageNetMapper()
+        mapper = imageNetMapper.ImageNetMapper()
         mapper.extractAndPackData(os.path.join('Data','ValTest.tar'),os.path.join('Data','groundTruth.txt'),outFolder,'TestSet',maxcount=3, groundTruthBaseName='Pic')
         assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
 
@@ -150,7 +149,7 @@ class ShardTester(unittest.TestCase):
     def test_testgroundTruthMemory(self):        
         outFolder = os.path.join(self.tempFolder.name,'dsOutput')
         os.mkdir(outFolder)
-        mapper = ImageNetMapper()
+        mapper = imageNetMapper.ImageNetMapper()
         mapper.extractAndPackDataInMemory(os.path.join('Data','ValTest.tar'),os.path.join('Data','groundTruth.txt'),outFolder,'TestSet',maxcount=3, groundTruthBaseName='Pic')
         assert(os.path.isfile(os.path.join(outFolder, 'TestSet2.tar')))
 
