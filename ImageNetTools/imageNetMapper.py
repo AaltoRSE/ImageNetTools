@@ -18,10 +18,7 @@ import tarfile
 from io import BytesIO as BinaryReader
 import webdataset as wds
 from webdataset.writer import ShardWriter as SW
-import sys
 
-unbuffered = os.fdopen(sys.stdout.fileno(), 'w', 0)
-sys.stdout = unbuffered
 
 finalFilePattern = '.*?([^/]+)/[^/]*\..*'
 
@@ -292,9 +289,9 @@ class ImageNetMapper(object):
         
         if(toDisk):
             Files = tempfile.mkdtemp()
-            print('Extracting individual files to : ' + Files)            
+            print('Extracting individual files to : ' + Files, flush=True)            
         else:
-            print("reading Data to Memory")
+            print("reading Data to Memory", flush=True)
             Files = {}
         #this is more efficient than using tar files, and handles all our issues.
         
@@ -308,7 +305,7 @@ class ImageNetMapper(object):
         for element in dataset:
             #Here, we will check, whether this is a tar of tar or a tar of JPEGs.            
             currentClassName = element['__key__']            
-            print("Current class: " + currentClassName )
+            print("Current class: " + currentClassName , flush=True)
             #Create a directory for all those files.
             outFolder = currentClassName
             if 'tar' in element.keys():
