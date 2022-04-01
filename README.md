@@ -13,7 +13,11 @@ general any cluster based distributed file system, where files are distributed o
 on how to run ml training using the imageNet dataset and pytorch on triton.
 
 ## Requirements
-- Install the requirements: `pip install -r requirements.txt`
+- Create a conda environment using the requirements: 
+  `conda create env -f requirements.yaml`
+  if you have mamba installed used mamba (as it is much faster in resolving environments:
+  `mamba create env -f requirements.yaml`
+- 
 - Download the ImageNet dataset from http://www.image-net.org/.  
   If you are using the aalto triton cluster, the dataset is stored at `/scratch/shareddata/dldata/imagenet/ILSVRC2012_img_train.tar` and a 
   preprocessed version is stored at `/scratch/shareddata/dldata/imagenet/imagenet21k_resized.tar.gz`
