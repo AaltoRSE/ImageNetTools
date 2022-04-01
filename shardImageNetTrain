@@ -1,5 +1,5 @@
 {
-"dataSource" : "/tmp/ToShard.tar,
+"dataSource" : "/tmp/ToShard.tar",
 "metaDataFile" : "/tmp/meta.mat",
 "targetFolder" : "/tmp/Sharded",
 "datasetName" : "ImageNetTrain",
