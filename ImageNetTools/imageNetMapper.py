@@ -294,8 +294,14 @@ class ImageNetMapper(object):
             print("reading Data to Memory")
             Files = {}
         #this is more efficient than using tar files, and handles all our issues.
-        # The tar-balls are pretty large, so we reduce the number of tarballs extracted at each time to a few.
-        dataset = wds.WebDataset(trainDataFile,cache_size = 4)
+        
+        if toDisk:
+            # The tar-balls are pretty large, so we reduce the number of tarballs extracted at each time to a few.
+            dataset = wds.WebDataset(trainDataFile,cache_size = 4)
+        else:
+            # We assume there is sufficient memory.
+            dataset = wds.WebDataset(trainDataFile)
+            
         for element in dataset:
             #Here, we will check, whether this is a tar of tar or a tar of JPEGs.
             currentClassName = element['__key__']            
