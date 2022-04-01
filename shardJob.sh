@@ -9,7 +9,7 @@ source activate shardProcess
 
 cp $1 /tmp/ToShard.tar
 
-srun python dataset_sharding -c shardImageNetTrain
+srun python dataset_sharding.py -c shardImageNetTrain
 
 cp /tmp/Sharded/* $2
 
