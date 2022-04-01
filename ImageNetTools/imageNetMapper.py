@@ -18,7 +18,10 @@ import tarfile
 from io import BytesIO as BinaryReader
 import webdataset as wds
 from webdataset.writer import ShardWriter as SW
+import sys
 
+unbuffered = os.fdopen(sys.stdout.fileno(), 'w', 0)
+sys.stdout = unbuffered
 
 finalFilePattern = '.*?([^/]+)/[^/]*\..*'
 
@@ -303,8 +306,9 @@ class ImageNetMapper(object):
             dataset = wds.WebDataset(trainDataFile)
             
         for element in dataset:
-            #Here, we will check, whether this is a tar of tar or a tar of JPEGs.
+            #Here, we will check, whether this is a tar of tar or a tar of JPEGs.            
             currentClassName = element['__key__']            
+            print("Current class: " + currentClassName )
             #Create a directory for all those files.
             outFolder = currentClassName
             if 'tar' in element.keys():
