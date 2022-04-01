@@ -34,4 +34,4 @@ def preprocess(binary_data):
     # when now using the data, you will need to interpret it as a tensorflow
     # data = BytesIO(element) 
     # restored_tensor = torch.load(data)    
-    return data.get_value()
+    return data.getvalue()

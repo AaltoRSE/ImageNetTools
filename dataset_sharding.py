@@ -24,7 +24,7 @@ def parse_args(args):
     parser.add_argument('-r', '--filePattern',default=None, help='The regular expression to extract the class from the files\nThe default uses the folder name before the actual file', type=str)
     parser.add_argument('-n', '--datasetName',default='Dataset', help='The Base name of the output shards', type=str)    
     parser.add_argument('-x', '--maxcount',default=100000, help='Maximium number of files per shard', type=int)
-    parser.add_argument('-s', '--maxsize',default=3e9, help='Maximium size per shard', type=int)
+    parser.add_argument('-s', '--maxsize',default=1e9, help='Maximium size per shard', type=int)
     parser.add_argument('-y', '--inmemory',default=False, help='Whether to load the entire dataset into memory for sharding, only relevant if the original dataSource is a tar file', type=bool)
     parser.add_argument('-g', '--groundTruthBaseName',default='', help='The base name for a ground truth file to add the ID to (normally validation)\nIf not present or left empty, it wont be used. Relevant for e.g. imageNet validation data', type=str)
     parser.add_argument('-p', '--preprocess',default=None, help='A function name provided in the module preprocess that is to be used as a preprocessing function and will be applied to the binary data of each input file. This means, that the preprocessing has to take care of converting the data into a usable format and returning it into a usable binary format.', type=str)
