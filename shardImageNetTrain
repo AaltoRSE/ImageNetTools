@@ -1,0 +1,10 @@
+{
+"dataSource" : "/tmp/ILSVRC2012_img_train.tar,
+"metaDataFile" : "/tmp/meta.mat",
+"targetFolder" : "/tmp/Sharded",
+"datasetName" : "ImageNetTrain",
+"maxcount" : 1000000,
+"maxsize" : 1e9,
+"inMemory" : "False",
+"preprocess" : "preprocess"
+}
