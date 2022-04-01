@@ -6,5 +6,6 @@
 "maxcount" : 1000000,
 "maxsize" : 1e9,
 "inMemory" : false,
+"filePattern" : ".*?([^/]+)/[^/]*\..*",
 "preprocess" : "preprocess"
 }
