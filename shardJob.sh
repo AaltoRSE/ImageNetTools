@@ -3,6 +3,8 @@
 #SBATCH --mem=4G
 #SBATCH --cpus-per-task=1
 #SBATCH --output=ShardTest.out
+#SBATCH -p dgx-common,gpu
+
 
 module load miniconda
 source activate shardProcess
