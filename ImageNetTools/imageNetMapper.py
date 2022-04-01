@@ -293,7 +293,7 @@ class ImageNetMapper(object):
         else:
             Files = {}
         #this is more efficient than using tar files, and handles all our issues.
-        dataset = wds.WebDataset(trainDataFile)
+        dataset = wds.WebDataset(trainDataFile,cache_size = 1000)
         for element in dataset:
             #Here, we will check, whether this is a tar of tar or a tar of JPEGs.
             currentClassName = element['__key__']
