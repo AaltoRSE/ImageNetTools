@@ -291,6 +291,7 @@ class ImageNetMapper(object):
             Files = tempfile.mkdtemp()
             print('Extracting individual files to : ' + Files)            
         else:
+            print("reading Data to Memory")
             Files = {}
         #this is more efficient than using tar files, and handles all our issues.
         dataset = wds.WebDataset(trainDataFile,cache_size = 1000)
