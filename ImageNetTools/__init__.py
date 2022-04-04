@@ -8,28 +8,24 @@ from .imageNetMapper import ImageNetMapper
 from .IOTesters import benchmarkReader
 from .IOTesters import pureWDSRead 
 from .IOTesters import copyAndLoad 
-from .IOTesters import wdsWithWorkers 
-from .IOTesters import wdsWithWorkersAndBatches  
 from .imageNetTransformations import image_transformations as default_transformations
 
-def buildShardsForFolder(dataFolder, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=None, groundTruthBaseName=None):        
+def buildShardsForFolder(dataFolder, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=None, groundTruthBaseName=None, dataType='img'):        
         mapper = ImageNetMapper();
-        mapper.shardDataFolder(dataFolder, metaDataFile, targetFolder, dsName, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess, filePattern=filePattern, groundTruthBaseName=groundTruthBaseName)
+        mapper.shardDataFolder(dataFolder, metaDataFile, targetFolder, dsName, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess, filePattern=filePattern, groundTruthBaseName=groundTruthBaseName, dataType=dataType)
             
 
-def buildShardsForDataset(trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, inMemory = False, filePattern=None, groundTruthBaseName=None):
+def buildShardsForDataset(trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, inMemory = False, filePattern=None, groundTruthBaseName=None, dataType='img'):
         mapper = ImageNetMapper();
         if inMemory:
-            mapper.extractAndPackDataInMemory(trainDataFile, metaDataFile, targetFolder, dsName, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess, filePattern=filePattern, groundTruthBaseName=groundTruthBaseName)
+            mapper.extractAndPackDataInMemory(trainDataFile, metaDataFile, targetFolder, dsName, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess, filePattern=filePattern, groundTruthBaseName=groundTruthBaseName, dataType=dataType)
         else:
-            mapper.extractAndPackData(trainDataFile, metaDataFile, targetFolder, dsName, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess, filePattern=filePattern, groundTruthBaseName=groundTruthBaseName)
+            mapper.extractAndPackData(trainDataFile, metaDataFile, targetFolder, dsName, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess, filePattern=filePattern, groundTruthBaseName=groundTruthBaseName, dataType=dataType)
 
 
 
 def benchmarkIOSpeeds(DataSet): 
     benchmarkReader(DataSet, IOTesters.copyAndLoad)
     benchmarkReader(DataSet, IOTesters.pureWDSRead)
-    benchmarkReader(DataSet, IOTesters.wdsWithWorkers)
-    benchmarkReader(DataSet, IOTesters.wdsWithWorkersAndBatches)
 
     
