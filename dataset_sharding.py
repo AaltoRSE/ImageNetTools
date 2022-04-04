@@ -28,6 +28,7 @@ def parse_args(args):
     parser.add_argument('-y', '--inmemory',default=False, help='Whether to load the entire dataset into memory for sharding, only relevant if the original dataSource is a tar file', type=bool)
     parser.add_argument('-g', '--groundTruthBaseName',default='', help='The base name for a ground truth file to add the ID to (normally validation)\nIf not present or left empty, it wont be used. Relevant for e.g. imageNet validation data', type=str)
     parser.add_argument('-p', '--preprocess',default=None, help='A function name provided in the module preprocess that is to be used as a preprocessing function and will be applied to the binary data of each input file. This means, that the preprocessing has to take care of converting the data into a usable format and returning it into a usable binary format.', type=str)
+    parser.add_argument('--dataType',default='img', help='The type of data to be processed, only relevant for the key the data is stored under in the shards.', type=str)
     
     resargs = parser.parse_args(args)
     if resargs.conf is not None:
@@ -46,9 +47,9 @@ def main(sysargs):
     args = parse_args(sysargs)
     os.makedirs(args.targetFolder,exist_ok=True)
     if(os.path.isdir(args.dataSource)):
-        ImageNetTools.buildShardsForFolder(args.dataSource, args.metaDataFile, args.targetFolder, args.datasetName, maxcount=args.maxcount, maxsize=args.maxsize, filePattern=args.filePattern, preprocess=args.preprocess, groundTruthBaseName=args.groundTruthBaseName)
+        ImageNetTools.buildShardsForFolder(args.dataSource, args.metaDataFile, args.targetFolder, args.datasetName, maxcount=args.maxcount, maxsize=args.maxsize, filePattern=args.filePattern, preprocess=args.preprocess, groundTruthBaseName=args.groundTruthBaseName, dataType=args.dataType)
     else:
-        ImageNetTools.buildShardsForDataset(args.dataSource, args.metaDataFile, args.targetFolder, args.datasetName, maxcount=args.maxcount, maxsize=args.maxsize, inMemory = args.inMemory, filePattern=args.filePattern, preprocess=args.preprocess, groundTruthBaseName=args.groundTruthBaseName)     
+        ImageNetTools.buildShardsForDataset(args.dataSource, args.metaDataFile, args.targetFolder, args.datasetName, maxcount=args.maxcount, maxsize=args.maxsize, inMemory = args.inMemory, filePattern=args.filePattern, preprocess=args.preprocess, groundTruthBaseName=args.groundTruthBaseName, dataType=args.dataType)     
 
 
 
