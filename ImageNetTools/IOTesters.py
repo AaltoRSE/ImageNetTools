@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader
 import tempfile
 import shutil
 import re
+from torchvision.datasets import ImageNet
 
 ShardPattern = re.compile('(.*)\{([0-9]+)\.\.([0-9]+)\}(.*)')
 
@@ -118,4 +119,13 @@ def wdsWithWorkersAndBatches(DatasetFile, checkedkey = ['jpeg','tar']):
         #This will happen with the last element of some sets, or if there are further items which are not jpegs in it...
         print(e)
     return itemsTouched
-        
+
+def pyTorchImageNet(DataSetFolder,checkedkey = ['jpeg','tar']):
+    dataset = ImageNet(DataSetFolder)
+    dataloader = DataLoader(dataset) 
+    itemsTouched = 0   
+    for element in dataloader:        
+        if checkKeys(checkedkey,element.keys()):
+            itemsTouched+=1
+              
+    return itemsTouched
