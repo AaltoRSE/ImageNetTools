@@ -120,7 +120,7 @@ def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, file
                                 
 def getSample(key, keyClass, preprocess, binary_data, dataType):        
     # Take only the base file name, the type and class will be added by the shardwriter
-    if not preprocess == None:
+    if not preprocess == None:        
         binary_data = preprocess(binary_data)         
     sample = {"__key__": key,
                   dataType : binary_data,
@@ -291,7 +291,7 @@ class ImageNetMapper(object):
             Files = tempfile.mkdtemp()
             print('Extracting individual files to : ' + Files, flush=True)            
         else:
-            print("reading Data to Memory", flush=True)
+            print("Reading Data to Memory", flush=True)
             Files = {}
         #this is more efficient than using tar files, and handles all our issues.
         
@@ -305,7 +305,7 @@ class ImageNetMapper(object):
         for element in dataset:
             #Here, we will check, whether this is a tar of tar or a tar of JPEGs.            
             currentClassName = element['__key__']            
-            print("Current class: " + currentClassName , flush=True)
+            #print("Current class: " + currentClassName , flush=True)
             #Create a directory for all those files.
             outFolder = currentClassName
             if 'tar' in element.keys():
