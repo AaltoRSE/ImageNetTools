@@ -30,7 +30,7 @@ def getMatch(fileName, pattern):
         return res.groups()[0]  
         
         
-def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName, filePattern = None, maxcount=100000, maxsize=3e9, preprocess = None, dataType = ".jpg"):
+def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName, filePattern = None, maxcount=100000, maxsize=3e9, preprocess = None, dataType = "img"):
     '''
     Build shards from a folder with image files and a given translation table between images and associated classes.
     
@@ -48,6 +48,7 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
     preprocess:         A function that takes in an read file and preprocesses the raw data. 
                         NOTE: The data provided to preprocess, is the raw data, if it's an image and you need an image object, 
                               you have to decode it in the preprocess function.
+    dataType:           The type of data processed, will be the key, the data is stored under in the shards.
     '''
     
     res = []     
@@ -76,7 +77,7 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
                 writer.write(sample)
                                 
 
-def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, filePattern = None, maxcount=100000, maxsize=3e9, preprocess = None, dataType = "jpg"):
+def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, filePattern = None, maxcount=100000, maxsize=3e9, preprocess = None, dataType = "img"):
     '''
     Build shuffled shards from a source tar file keeping all elements in memory. 
     This function can easily fail if insufficient memory is allocated. 
@@ -95,6 +96,7 @@ def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, file
     preprocess:         A function that takes in an read file and preprocesses the raw data. 
                         NOTE: The data provided to preprocess, is the raw data, if it's an image and you need an image object, 
                               you have to decode it in the preprocess function.
+    dataType:           The type of data processed, will be the key, the data is stored under in the shards.                              
     '''
     
     res = []
@@ -120,6 +122,7 @@ def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, file
                                 
 def getSample(key, keyClass, preprocess, binary_data, dataType):        
     # Take only the base file name, the type and class will be added by the shardwriter
+    print(key)
     if not preprocess == None:        
         binary_data = preprocess(binary_data)         
     sample = {"__key__": key,
@@ -162,7 +165,7 @@ class ImageNetMapper(object):
                 self.idmap = json.load(f)
             
     
-    def shardDataFolder(self, dataFolder, metaDataFile,targetFolder, dsName,maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, groundTruthBaseName=False):
+    def shardDataFolder(self, dataFolder, metaDataFile,targetFolder, dsName,maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, groundTruthBaseName=False, dataType = "img"):
         '''
         Read in data from a folder, using either a metaDataFile 
         and build randomized shards from it, including labels.
@@ -180,7 +183,7 @@ class ImageNetMapper(object):
                             NOTE: The data provided to preprocess, is the raw data, if it's an image and you need an image object, 
                             you have to decode it in the preprocess function.
         filePattern:        The pattern used to extract the WNIDs for each element 
-
+        dataType:           The type of data processed, will be the key, the data is stored under in the shards.
         '''
         if not groundTruthBaseName:
             self.createInstanceToClassFromSynsetInfo(metaDataFile)
@@ -189,11 +192,11 @@ class ImageNetMapper(object):
             #No pattern, since we use ground-truthes.            
             filePattern = re.compile('.*?[^/]*?/?([^/]*\..*)')
         
-        buildShardsFromFolder(dataFolder, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess)
+        buildShardsFromFolder(dataFolder, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess, dataType = dataType)
         
         
         
-    def extractAndPackData(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, groundTruthBaseName=False):
+    def extractAndPackData(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, groundTruthBaseName=False, dataType='img'):
         '''
         Extract a Training data file (assumed to have the following internal structure:
         Train.tar 
@@ -207,7 +210,7 @@ class ImageNetMapper(object):
         trainDataFile:      The location of the training data file
         metaDataFile:       The location of the metaData .mat file to build the mapping
         targetFolder:       The output folder (optimally network space)
-        dsName:             Base name of the output ffiles (The resulting sharded DS will be stored as dsname000X..XXXX.tar)
+        dsName:             Base name of the output ffiles (The resulting sharded DS will be stored as dsname000X..XXXX.tar)        
                
         Optional Parameters:
         maxcount:           Maximum number of files within one shard (default 100000)
@@ -216,7 +219,7 @@ class ImageNetMapper(object):
                             NOTE: The data provided to preprocess, is the raw data, if it's an image and you need an image object, 
                             you have to decode it in the preprocess function.
         filePattern:        The pattern used to extract the WNIDs for each element 
-
+        dataType:           The type of data (only relevant for the key the data is stored under in the shards)
         '''
 
         #Extract All files to the local tmp directory, placing them in a directory named after the internal .jar File        
@@ -230,10 +233,10 @@ class ImageNetMapper(object):
             #No pattern, since we use ground-truthes.            
             filePattern = '.*?[^/]*?/?([^/]*\..*)'
         # now, Create classes with the mapping
-        buildShardsFromFolder(tmpDir, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess)        
+        buildShardsFromFolder(tmpDir, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess, dataType=dataType)        
             
         
-    def extractAndPackDataInMemory(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, metaIsSynset=True, groundTruthBaseName=False):
+    def extractAndPackDataInMemory(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, metaIsSynset=True, groundTruthBaseName=False, dataType='img'):
         '''
         Extract a Training data file (assumed to have the following internal structure:
         Train.tar 
@@ -268,7 +271,7 @@ class ImageNetMapper(object):
             #No pattern, since we use ground-truthes.            
             filePattern = None
             
-        buildShardsFromSource(Files, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess)        
+        buildShardsFromSource(Files, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess, dataType=dataType)        
 
         #Extract All files to the local tmp directory, placing them in a directory named after the internal .jar File        
 

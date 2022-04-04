@@ -12,10 +12,14 @@ import tempfile
 import shutil
 import re
 from torchvision.datasets import ImageNet
+import torchvision.transforms as transforms
 
 ShardPattern = re.compile('(.*)\{([0-9]+)\.\.([0-9]+)\}(.*)')
 
-def benchmarkReader(datasetFile, readingFunction):
+image_transformations = transforms.Compose([transforms.ToTensor()])  
+
+
+def benchmarkReader(datasetFile, readingFunction, preprocess = None):
     '''
     This function benchmarks the IO speed on a given dataset using the provided reading function.
     The reading function is assumed to read in the whole dataset, without further processing the data
@@ -41,11 +45,12 @@ def benchmarkReader(datasetFile, readingFunction):
     else:
         dsSize = path.getsize(datasetFile)
     starttime = time.perf_counter()
-    itemsTouched = readingFunction(datasetFile)
+    itemsTouched = readingFunction(datasetFile,preprocess)
     totaltime = time.perf_counter() - starttime;
     datarate = dsSize / totaltime / 1e6
     print("The IO speed for " + readingFunction.__name__ + " was {:0.4f} Mb/s".format(datarate) )
     print("{:} items were read".format(itemsTouched) )
+    print("The IO speed per Item is " + readingFunction.__name__ + " was {:0.8f} s/Item".format(totaltime/itemsTouched))
 
 def checkKeys(keysA, keysB):
     if len(keysB) < len(keysA):
@@ -58,7 +63,7 @@ def checkKeys(keysA, keysB):
                 return True
     return False
 
-def copyAndLoad(DataSetFile, checkedkey = ['jpeg','tar']):
+def copyAndLoad(DataSetFile,preprocess =None):
     '''
     First copy the Dataset and then read it from local disc
     '''    
@@ -69,63 +74,69 @@ def copyAndLoad(DataSetFile, checkedkey = ['jpeg','tar']):
     shutil.copy(DataSetFile,tempFile)
     # and load    
     dataset = wds.WebDataset(tempFile)
-    #Build the wrapper since this will be closer to what we will have
-    dataloader = DataLoader(dataset)    
-    for element in dataloader:        
-        if checkKeys(checkedkey,element.keys()):
+    for element in dataset:        
+        if len(element) > 0:
             itemsTouched+=1
-        
     return itemsTouched    
 
-def pureWDSRead(DatasetFile, checkedkey = ['jpeg','tar']):
+def pureWDSRead(DatasetFile, preprocess =None):
     '''
     Read in the Dataset purely with WDS
     '''    
     itemsTouched = 0
     dataset = wds.WebDataset(DatasetFile)
-    #Build the wrapper since this will be closer to what we will have
-    dataloader = DataLoader(dataset)    
-    for element in dataloader:        
-        if checkKeys(checkedkey,element.keys()):
-            itemsTouched+=1  
+    for element in dataset:        
+        if len(element) > 0:
+            itemsTouched+=1
+              
     return itemsTouched
 
-def wdsWithWorkers(DatasetFile, checkedkey = ['jpeg','tar']):
+def wdsWithWorkers(DatasetFile, preprocess =None):
     '''
     Read in the Dataset with WDS using multiple workers from pyTorch
     '''   
     itemsTouched = 0     
     dataset = wds.WebDataset(DatasetFile)
-    #Build the wrapper since this will be closer to what we will have
-    dataloader = DataLoader(dataset,num_workers = 4)    
-    for element in dataloader:        
-        if checkKeys(checkedkey,element.keys()):
+    for element in dataset:        
+        if len(element) > 0:
             itemsTouched+=1
     return itemsTouched
 
-def wdsWithWorkersAndBatches(DatasetFile, checkedkey = ['jpeg','tar']):    
-    '''
-    Read in the Dataset with WDS using multiple workers and a larger batch_size from pyTorch
-    '''
-    itemsTouched = 0    
-    dataset = wds.WebDataset(DatasetFile)
-    #Build the wrapper since this will be closer to what we will have
-    dataloader = DataLoader(dataset,num_workers = 4,batch_size=100)
-    try:    
-        for element in dataloader:        
-            if checkKeys(checkedkey,element.keys()):
-                itemsTouched+=1
-    except Exception as e:
-        #This will happen with the last element of some sets, or if there are further items which are not jpegs in it...
-        print(e)
-    return itemsTouched
 
-def pyTorchImageNet(DataSetFolder,checkedkey = ['jpeg','tar']):
+def pyTorchImageNet(DataSetFolder,preprocess =None):
     dataset = ImageNet(DataSetFolder)
     dataloader = DataLoader(dataset) 
     itemsTouched = 0   
-    for element in dataloader:        
-        if checkKeys(checkedkey,element.keys()):
+    for element in dataset:        
+        if len(element) > 0:
             itemsTouched+=1
               
     return itemsTouched
+
+def testWDSDecode(DataSetFile, preprocess):
+    if(preprocess == None):
+        dataset = wds.WebDataset(DataSetFile).decode('pil').to_tuple('jpg','cls')
+    else:
+        dataset = wds.WebDataset(DataSetFile).to_tuple('jpg','cls').map_tuple(preprocess,lambda x:x)
+    itemsTouched = 0   
+    for element in dataset:        
+        if len(element) > 0:
+            itemsTouched+=1        
+    return itemsTouched
+    
+def testWDSDecodeWithDL(DataSetFile, preprocess):
+    if(preprocess == None):
+        dataset = wds.WebDataset(DataSetFile).decode('pil').to_tuple('jpg','cls').map_tuple(image_transformations, lambda x:x)
+    else:
+        dataset = wds.WebDataset(DataSetFile).to_tuple('jpg','cls').map_tuple(preprocess,lambda x:x).map_tuple(image_transformations, lambda x:x)
+    itemsTouched = 0
+    dl = DataLoader(dataset, num_workers=4, batch_size=8)
+       
+    for element,cls in dl:
+        for item in element:        
+            itemsTouched+=1        
+    return itemsTouched
+    
+    
+    
+    
