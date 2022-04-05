@@ -63,7 +63,7 @@ def checkKeys(keysA, keysB):
                 return True
     return False
 
-def copyAndLoad(DataSetFile,preprocess =None):
+def copyAndLoad(DataSetFile,preprocess = None):
     '''
     First copy the Dataset and then read it from local disc
     '''    
@@ -79,7 +79,7 @@ def copyAndLoad(DataSetFile,preprocess =None):
             itemsTouched+=1
     return itemsTouched    
 
-def pureWDSRead(DatasetFile, preprocess =None):
+def pureWDSRead(DatasetFile, preprocess = None):
     '''
     Read in the Dataset purely with WDS
     '''    
@@ -91,7 +91,7 @@ def pureWDSRead(DatasetFile, preprocess =None):
               
     return itemsTouched
 
-def wdsWithWorkers(DatasetFile, preprocess =None):
+def wdsWithWorkers(DatasetFile, preprocess = None):
     '''
     Read in the Dataset with WDS using multiple workers from pyTorch
     '''   
@@ -103,13 +103,14 @@ def wdsWithWorkers(DatasetFile, preprocess =None):
     return itemsTouched
 
 
-def pyTorchImageNet(DataSetFolder,preprocess =None):
-    dataset = ImageNet(DataSetFolder)
-    dataloader = DataLoader(dataset) 
+def pyTorchImageNet(DataSetFolder,preprocess = None,  num_workers=4, batch_size=1000,):
+    dataset = ImageNet(DataSetFolder,transform=preprocess);
+    dataloader = DataLoader(dataset, num_workers=num_workers, batch_size=batch_size)    
     itemsTouched = 0   
-    for element in dataset:        
-        if len(element) > 0:
-            itemsTouched+=1
+    for element,target in dataloader:        
+        tmp = element[0]       
+        if not tmp  == None:            
+            itemsTouched+=1 
               
     return itemsTouched
 
