@@ -22,7 +22,11 @@ image_transformations = transforms.Compose([
                                  ])   
 
 
+
 def preprocess(binary_data):
+    """ This preprocessing function resizes the images, and produces byte-code (larger than jpg but loaded more efficiently).
+        It is expected to be used with the ByteToPil function for later processing in pytorch.
+    """ 
     # load the binary data into an image format.
     f = BytesIO(binary_data)
     # Convert it into an image, so that we can apply the transformations
@@ -45,6 +49,11 @@ def preprocess(binary_data):
 
 
 def ByteToPil(img):
+    """ This is a helper function to convert the generated images in byte-code back to PIL images for data loading.
+        It is expected to be used with webdataset datasets in a map_tuple function, where this function is applied to 
+        the image data loaded:
+        wds.to_tuple('img','cls').map_tuple(ByteToPil,lambda x:x).map_tuple(image_cropping, lambda x:x)
+    """
     data = BytesIO(img).read()
     im = Image.frombytes('RGB',(256,256),data)
     return im

@@ -16,10 +16,10 @@ import torchvision.transforms as transforms
 
 ShardPattern = re.compile('(.*)\{([0-9]+)\.\.([0-9]+)\}(.*)')
 
-image_transformations = transforms.Compose([transforms.ToTensor()])  
+toTensor = transforms.Compose([transforms.ToTensor()])  
 
 
-def benchmarkReader(datasetFile, readingFunction, preprocess = None):
+def benchmarkReader(datasetFile, readingFunction, preprocess = None, **kwargs):
     '''
     This function benchmarks the IO speed on a given dataset using the provided reading function.
     The reading function is assumed to read in the whole dataset, without further processing the data
@@ -45,7 +45,7 @@ def benchmarkReader(datasetFile, readingFunction, preprocess = None):
     else:
         dsSize = path.getsize(datasetFile)
     starttime = time.perf_counter()
-    itemsTouched = readingFunction(datasetFile,preprocess)
+    itemsTouched = readingFunction(datasetFile,preprocess, **kwargs)
     totaltime = time.perf_counter() - starttime;
     datarate = dsSize / totaltime / 1e6
     print("The IO speed for " + readingFunction.__name__ + " was {:0.4f} Mb/s".format(datarate) )
@@ -113,30 +113,45 @@ def pyTorchImageNet(DataSetFolder,preprocess =None):
               
     return itemsTouched
 
-def testWDSDecode(DataSetFile, preprocess):
+def testWDSDecode(DataSetFile, preprocess, dataType = 'jpg'):
     if(preprocess == None):
-        dataset = wds.WebDataset(DataSetFile).decode('pil').to_tuple('jpg','cls')
+        dataset = wds.WebDataset(DataSetFile).decode('pil').to_tuple(dataType,'cls')
     else:
-        dataset = wds.WebDataset(DataSetFile).to_tuple('jpg','cls').map_tuple(preprocess,lambda x:x)
+        dataset = wds.WebDataset(DataSetFile).to_tuple(dataType,'cls').map_tuple(preprocess,lambda x:x)
     itemsTouched = 0   
-    for element in dataset:        
-        if len(element) > 0:
+    for element in dataset: 
+        tmp = element[0]       
+        if not tmp  == None:            
             itemsTouched+=1        
     return itemsTouched
     
-def testWDSDecodeWithDL(DataSetFile, preprocess):
+def testWDSDecodeWithDL(DataSetFile, preprocess, dataType='jpg', num_workers=4, batch_size=1000, pilData =  True):
+    # If its not being preprocessed, we assume pil data to decode. Otherwise there is an option to decode.
     if(preprocess == None):
-        dataset = wds.WebDataset(DataSetFile).decode('pil').to_tuple('jpg','cls').map_tuple(image_transformations, lambda x:x)
-    else:
-        dataset = wds.WebDataset(DataSetFile).to_tuple('jpg','cls').map_tuple(preprocess,lambda x:x).map_tuple(image_transformations, lambda x:x)
+        dataset = wds.WebDataset(DataSetFile).decode('pil').to_tuple(dataType,'cls').map_tuple(toTensor, lambda x:x)
+    else:        
+        if pilData:
+            dataset = wds.WebDataset(DataSetFile).decode('pil').to_tuple(dataType,'cls').map_tuple(preprocess,lambda x:x)
+        else:
+            dataset = wds.WebDataset(DataSetFile).to_tuple(dataType,'cls').map_tuple(preprocess,lambda x:x).map_tuple(toTensor, lambda x:x)
+               
     itemsTouched = 0
-    dl = DataLoader(dataset, num_workers=4, batch_size=8)
-       
+    dl = DataLoader(dataset, num_workers=num_workers, batch_size=batch_size)       
     for element,cls in dl:
-        for item in element:        
-            itemsTouched+=1        
+        for item in element:
+            if not item == None:         
+                itemsTouched+=1        
     return itemsTouched
     
-    
+def checkEntries(DataSetFile, preprocess= lambda x:x, dataType = 'jpg'):    
+    dataset = wds.WebDataset(DataSetFile)    
+    itemsTouched = 0   
+    for element in dataset:
+        print(element['__key__'])
+        preprocess(element[dataType]) 
+        tmp = element[0]       
+        if not tmp  == None:            
+            itemsTouched+=1        
+    return itemsTouched    
     
     
