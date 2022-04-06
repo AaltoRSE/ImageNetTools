@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --time=04:00:00
-#SBATCH --mem=40G
-#SBATCH --cpus-per-task=1
+#SBATCH --time=12:00:00
+#SBATCH --mem=240G
+#SBATCH --cpus-per-task=2
 #SBATCH --output=ShardTest.out
 #SBATCH -p dgx-common,gpu
 
@@ -13,5 +13,5 @@ cp $1 /tmp/ToShard.tar
 cp $2 /tmp/meta.mat
 srun python dataset_sharding.py -c shardImageNetTrain
 
-cp /tmp/Sharded/* $2
+cp /tmp/Sharded/* $3
 
