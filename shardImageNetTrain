@@ -5,7 +5,7 @@
 "datasetName" : "ImageNetTrain",
 "maxcount" : 1000000,
 "maxsize" : 1e9,
-"inMemory" : false,
+"inMemory" : true,
 "filePattern" : ".*?([^/]+)/[^/]*\\..*",
-"preprocess" : "preprocess"
+"dataType" : "jpg"
 }
