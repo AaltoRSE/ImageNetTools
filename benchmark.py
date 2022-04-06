@@ -6,7 +6,7 @@ Created on Apr 5, 2022
 
 from ImageNetTools import IOTesters 
 from preprocess import ByteToPil
-from ImageNetTools import imageNetTransformations
+from ImageNetTools import imageNetTransformations  
 from imageNetTransformations import image_transformations as preprocess
 import sys
 
