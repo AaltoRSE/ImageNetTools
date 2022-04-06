@@ -45,3 +45,6 @@ def runBenchmark():
     runWDSLoadUnprocessed(procDSLocal, procDSNetwork)
     runDefaultImageNet(BasicIMLocal)
     runWDSLoadProcessed()
+
+
+runBenchmark()
