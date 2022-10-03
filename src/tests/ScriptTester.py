@@ -1,5 +1,5 @@
-from src.dataset_sharding import parse_args
-from src.dataset_sharding import main as shard
+from dataset_sharding import parse_args
+from dataset_sharding import main as shard
 import json
 import unittest
 import tempfile 
@@ -22,7 +22,7 @@ class ScriptTester(unittest.TestCase):
         commandlineArgs = "--conf tests/testConfig -x 2"
         args = parse_args(commandlineArgs.split())
         assert args.maxcount == 2
-        assert args.dataSource == "../ImageNetTools/tests/Data/Bundle.tar"
+        assert args.dataSource == "tests/Data/Bundle.tar"
     
     def test_shard_Tar_Memory(self):
         commandlineArgs = "--conf tests/testConfig -x 2 -r .*?([^/]+)/[^/]*\..*"
