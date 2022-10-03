@@ -30,7 +30,7 @@ def getMatch(fileName, pattern):
         return res.groups()[0]  
         
         
-def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName, filePattern = None, maxcount=100000, maxsize=3e9, preprocess = None, dataType = "img", mappingFile="FileInfo.json"):
+def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName, filePattern = None, maxcount=100000, maxsize=3e9, preprocess = None, dataType = "img", mappingFile="FileInfo.json", seed=1):
     '''
     Build shards from a folder with image files and a given translation table between images and associated classes.
     
@@ -50,7 +50,7 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
                               you have to decode it in the preprocess function.
     dataType:           The type of data processed, will be the key, the data is stored under in the shards.
     '''
-    
+    rng = np.random.default_rng(seed)
     res = []     
     Files = [f for f in pathlib.Path(fileFolder).rglob('*.*')]    
     if filePattern == None:
@@ -60,7 +60,7 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
         res = [(os.fspath(fname), os.path.splitext(os.fspath(fname.relative_to(fileFolder)))[0], getMatch(os.fspath(fname.relative_to(fileFolder)),filePattern)) for fname in Files]
                 
     #get an appropriate length of Shard Names
-    perm = np.random.permutation(len(res))
+    perm = rng.permutation(len(res))
     numFileLength = ceil(log10(len(perm)/maxcount))
     if numFileLength < 1:
         numFileLength = 1
@@ -95,7 +95,7 @@ def writeSample(sample, writer):
     
     
 
-def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, filePattern = None, maxcount=100000, maxsize=3e9, preprocess = None, dataType = "img", mappingFile="FileInfo.json"):
+def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, filePattern = None, maxcount=100000, maxsize=3e9, preprocess = None, dataType = "img", mappingFile="FileInfo.json", seed = 1):
     '''
     Build shuffled shards from a source tar file keeping all elements in memory. 
     This function can easily fail if insufficient memory is allocated. 
@@ -116,7 +116,7 @@ def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, file
                               you have to decode it in the preprocess function.
     dataType:           The type of data processed, will be the key, the data is stored under in the shards.                              
     '''
-    
+    rng = np.random.default_rng(seed)
     res = []
     #Open the tarfile as stream.     
     if filePattern == None:
@@ -125,7 +125,7 @@ def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, file
         filePattern = re.compile(filePattern);
         res = [(fname, os.path.splitext(fname)[0], getMatch(fname,filePattern)) for fname in Files]            
     #get an appropriate length of Shard Names
-    perm = np.random.permutation(len(res))
+    perm = rng.permutation(len(res))
     numFileLength = str(ceil(log10(len(perm)/maxcount)))
     outputpattern = outputFileName + "%0" + numFileLength + "d.tar"
     outputMetaData = {}
@@ -187,7 +187,7 @@ class ImageNetMapper(object):
                 self.idmap = json.load(f)
             
     
-    def shardDataFolder(self, dataFolder, metaDataFile,targetFolder, dsName,maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, groundTruthBaseName=False, dataType = "img"):
+    def shardDataFolder(self, dataFolder, metaDataFile,targetFolder, dsName,maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, groundTruthBaseName=False, dataType = "img", seed=1):
         '''
         Read in data from a folder, using either a metaDataFile 
         and build randomized shards from it, including labels.
@@ -206,6 +206,7 @@ class ImageNetMapper(object):
                             you have to decode it in the preprocess function.
         filePattern:        The pattern used to extract the WNIDs for each element 
         dataType:           The type of data processed, will be the key, the data is stored under in the shards.
+        seed:               The seed to generate the permutation (default: 1)
         '''
         if not groundTruthBaseName:
             self.createInstanceToClassFromSynsetInfo(metaDataFile)
@@ -214,11 +215,11 @@ class ImageNetMapper(object):
             #No pattern, since we use ground-truthes.            
             filePattern = re.compile('.*?[^/]*?/?([^/]*\..*)')
         
-        buildShardsFromFolder(dataFolder, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess, dataType = dataType)
+        buildShardsFromFolder(dataFolder, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess, dataType = dataType, seed=seed)
         
         
         
-    def extractAndPackData(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, groundTruthBaseName=False, dataType='img'):
+    def extractAndPackData(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, groundTruthBaseName=False, dataType='img', seed=1):
         '''
         Extract a Training data file (assumed to have the following internal structure:
         Train.tar 
@@ -242,6 +243,7 @@ class ImageNetMapper(object):
                             you have to decode it in the preprocess function.
         filePattern:        The pattern used to extract the WNIDs for each element 
         dataType:           The type of data (only relevant for the key the data is stored under in the shards)
+        seed:               The seed to generate the permutation (default: 1)
         '''
 
         #Extract All files to the local tmp directory, placing them in a directory named after the internal .jar File        
@@ -255,10 +257,10 @@ class ImageNetMapper(object):
             #No pattern, since we use ground-truthes.            
             filePattern = '.*?[^/]*?/?([^/]*\..*)'
         # now, Create classes with the mapping
-        buildShardsFromFolder(tmpDir, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess, dataType=dataType)        
+        buildShardsFromFolder(tmpDir, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess, dataType=dataType, seed=seed)        
             
         
-    def extractAndPackDataInMemory(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, metaIsSynset=True, groundTruthBaseName=False, dataType='img'):
+    def extractAndPackDataInMemory(self, trainDataFile, metaDataFile, targetFolder, dsName, maxcount=100000, maxsize=3e9, preprocess = None, filePattern=finalFilePattern, metaIsSynset=True, groundTruthBaseName=False, dataType='img', seed=1):
         '''
         Extract a Training data file (assumed to have the following internal structure:
         Train.tar 
@@ -284,6 +286,7 @@ class ImageNetMapper(object):
                             NOTE: The data provided to preprocess, is the raw data, if it's an image and you need an image object, 
                             you have to decode it in the preprocess function.
         filePattern:        The pattern used to extract the WNIDs for each element  
+        seed:               The seed to generate the permutation (default: 1)
         '''        
         Files = self.readData(trainDataFile,False)
         if not groundTruthBaseName:
@@ -293,7 +296,7 @@ class ImageNetMapper(object):
             #No pattern, since we use ground-truthes.            
             filePattern = None
             
-        buildShardsFromSource(Files, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess, dataType=dataType)        
+        buildShardsFromSource(Files, self.idmap, targetFolder, dsName, filePattern=filePattern, maxcount=maxcount, maxsize=maxsize, preprocess=preprocess, dataType=dataType, seed=seed)        
 
         #Extract All files to the local tmp directory, placing them in a directory named after the internal .jar File        
 
