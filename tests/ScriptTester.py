@@ -1,5 +1,5 @@
-from dataset_sharding import parse_args
-from dataset_sharding import main as shard
+from src.dataset_sharding import parse_args
+from src.dataset_sharding import main as shard
 import json
 import unittest
 import tempfile 
@@ -19,13 +19,13 @@ class ScriptTester(unittest.TestCase):
         
     def test_shard_parser(self):
         # This only tests, whether shards can be written (and checks, whether files were created.
-        commandlineArgs = "--conf testConfig -x 2"
+        commandlineArgs = "--conf tests/testConfig -x 2"
         args = parse_args(commandlineArgs.split())
         assert args.maxcount == 2
         assert args.dataSource == "../ImageNetTools/tests/Data/Bundle.tar"
     
     def test_shard_Tar_Memory(self):
-        commandlineArgs = "--conf testConfig -x 2 -r .*?([^/]+)/[^/]*\..*"
+        commandlineArgs = "--conf tests/testConfig -x 2 -r .*?([^/]+)/[^/]*\..*"
         args = parse_args(commandlineArgs.split())    
         shard(commandlineArgs.split())
         filesInTempFolder = os.listdir(args.targetFolder)
@@ -49,7 +49,7 @@ class ScriptTester(unittest.TestCase):
         assert len(pictureNames) == 0 
 
     def test_shard_Tar_preproc(self):
-        commandlineArgs = "--conf testConfig -x 2 -r .*?([^/]+)/[^/]*\..* -p preprocess"
+        commandlineArgs = "--conf tests/testConfig -x 2 -r .*?([^/]+)/[^/]*\..* -p preprocess"
         args = parse_args(commandlineArgs.split())    
         shard(commandlineArgs.split())
         filesInTempFolder = os.listdir(args.targetFolder)
@@ -75,7 +75,7 @@ class ScriptTester(unittest.TestCase):
     
 
     def test_shard_Folder(self):
-        commandlineArgs = "--conf testConfig -x 2 -d ../ImageNetTools/tests/Data/Images -m ClassInfo.json"
+        commandlineArgs = "--conf tests/testConfig -x 2 -d tests/Data/Images -m tests/ClassInfo.json"
         args = parse_args(commandlineArgs.split())    
         shard(commandlineArgs.split())
         filesInTempFolder = os.listdir(args.targetFolder)
@@ -84,9 +84,9 @@ class ScriptTester(unittest.TestCase):
             assert file.startswith(args.datasetName)
         #Now, test the contents.
         # Since the pictures came from Part1.tars, these will be kept in the key.
-        with open('ClassInfo.json','r') as f:
+        with open('tests/ClassInfo.json','r') as f:
             res = json.load(f) 
-            pictureNames = { n.replace('.JPEG','') : res[n] for n in res} 
+            pictureNames = { n.replace('.JPEG','') : res[n] for n in res}
         shardNames = os.path.join('testOutput',"INValidation{0..5}.tar")
         ds = wds(shardNames);
         loader = DataLoader(ds)

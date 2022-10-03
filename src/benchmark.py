@@ -4,9 +4,9 @@ Created on Apr 5, 2022
 @author: thomas
 '''
 
-from ImageNetTools import IOTesters 
+from .ImageNetTools import IOTesters 
 from preprocess import ByteToPil
-from ImageNetTools import imageNetTransformations  
+from .ImageNetTools import imageNetTransformations  
 import sys
 
 preprocess = imageNetTransformations.image_transformations

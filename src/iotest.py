@@ -4,7 +4,7 @@ Created on Sep 29, 2021
 @author: thomas
 '''
 
-import ImageNetTools
+from . import ImageNetTools
 import sys
 import getopt
                         

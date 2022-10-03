@@ -4,7 +4,7 @@ Created on Sep 29, 2021
 @author: thomas
 '''
 
-import ImageNetTools
+from . import ImageNetTools
 import sys
 import os
 import re
@@ -38,7 +38,7 @@ def parse_args(args):
     # Reparse to overwrite config file values by values from command line.    
         resargs = parser.parse_args(args)
     if not resargs.preprocess == None:
-        import preprocess
+        from . import preprocess
         resargs.preprocess = getattr(preprocess,resargs.preprocess)
     
     return resargs

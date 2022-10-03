@@ -17,7 +17,7 @@ import torch.optim
 import torch.multiprocessing as mp
 import torchvision.models as models
 
-from ImageNetTools import default_transformations as image_transformations
+from .ImageNetTools import default_transformations as image_transformations
 
 import webdataset as wds
 

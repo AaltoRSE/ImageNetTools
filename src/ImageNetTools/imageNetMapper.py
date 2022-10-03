@@ -30,7 +30,7 @@ def getMatch(fileName, pattern):
         return res.groups()[0]  
         
         
-def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName, filePattern = None, maxcount=100000, maxsize=3e9, preprocess = None, dataType = "img"):
+def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName, filePattern = None, maxcount=100000, maxsize=3e9, preprocess = None, dataType = "img", mappingFile="FileInfo.json"):
     '''
     Build shards from a folder with image files and a given translation table between images and associated classes.
     
@@ -63,9 +63,10 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
     perm = np.random.permutation(len(res))
     numFileLength = ceil(log10(len(perm)/maxcount))
     if numFileLength < 1:
-        numFileLength = 1;
+        numFileLength = 1
     numFileLength = str(numFileLength)
     outputpattern = outputFileName + "%0" + numFileLength + "d.tar"
+    outputMetaData = {}
     with SW(os.path.join(targetFolder, outputpattern),maxcount=maxcount,maxsize=maxsize) as writer:        
         # due to matching we can have entries.
         for i in perm:
@@ -74,10 +75,27 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
                 with open(data[0],'rb') as stream:
                     binary_data =stream.read()        
                 sample = getSample(data[1], fileToClass[data[2]], preprocess, binary_data, dataType)                                 
-                writer.write(sample)
-                                
+                position,filename = writeSample(sample,writer)
+                outputMetaData[data[0]] = {'targetFile' : filename, 'position' : position}                
+    with open(os.path.join(targetFolder,mappingFile), 'w') as metaFile:
+        metaFile.write(json.dumps(outputMetaData))
 
-def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, filePattern = None, maxcount=100000, maxsize=3e9, preprocess = None, dataType = "img"):
+
+def writeSample(sample, writer):
+    '''
+    Write a Sample, and obtain the filename and the position of the file in the written shard.
+    '''
+    oldfile = writer.fname
+    oldpos = writer.size
+    writer.write(sample)    
+    if(writer.fname == oldfile):
+        return oldpos, writer.fname
+    else:
+        return 0,writer.fname
+    
+    
+
+def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, filePattern = None, maxcount=100000, maxsize=3e9, preprocess = None, dataType = "img", mappingFile="FileInfo.json"):
     '''
     Build shuffled shards from a source tar file keeping all elements in memory. 
     This function can easily fail if insufficient memory is allocated. 
@@ -110,6 +128,7 @@ def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, file
     perm = np.random.permutation(len(res))
     numFileLength = str(ceil(log10(len(perm)/maxcount)))
     outputpattern = outputFileName + "%0" + numFileLength + "d.tar"
+    outputMetaData = {}
     with SW(os.path.join(targetFolder, outputpattern),maxcount=maxcount,maxsize=maxsize) as writer:        
         # due to matching we can have entries.
         for i in perm:
@@ -117,7 +136,10 @@ def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, file
             if data[1] != None:
                 binary_data = Files[data[0]]                         
                 sample = getSample(data[1], fileToClass[data[2]], preprocess, binary_data, dataType)                    
-                writer.write(sample)
+                position,filename = writeSample(sample,writer)
+                outputMetaData[data[0]] = {'targetFile' : filename, 'position' : position}                
+    with open(os.path.join(targetFolder,mappingFile), 'w') as metaFile:
+        metaFile.write(json.dumps(outputMetaData))
                                 
                                 
 def getSample(key, keyClass, preprocess, binary_data, dataType):        
@@ -369,7 +391,8 @@ class ImageNetMapper(object):
             cclass = cline.strip();
             self.idmap[baseName + "%08d" % i + ".JPEG"] = cclass
             cline = groundTruth.readline();
-            i+=1                
+            i+=1      
+        groundTruth.close()          
         
     def getTrainingPattern(self):
                 
