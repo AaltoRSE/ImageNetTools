@@ -4,7 +4,7 @@ Created on Sep 29, 2021
 @author: thomas
 '''
 
-from . import ImageNetTools
+from ImageNetTools import buildShardsForFolder,buildShardsForDataset
 import sys
 import os
 import re
@@ -39,7 +39,7 @@ def parse_args(args):
     # Reparse to overwrite config file values by values from command line.    
         resargs = parser.parse_args(args)
     if not resargs.preprocess == None:
-        from . import preprocess
+        import preprocess
         resargs.preprocess = getattr(preprocess,resargs.preprocess)
     
     return resargs
@@ -48,9 +48,9 @@ def main(sysargs):
     args = parse_args(sysargs)
     os.makedirs(args.targetFolder,exist_ok=True)
     if(os.path.isdir(args.dataSource)):
-        ImageNetTools.buildShardsForFolder(args.dataSource, args.metaDataFile, args.targetFolder, args.datasetName, maxcount=args.maxcount, maxsize=args.maxsize, filePattern=args.filePattern, preprocess=args.preprocess, groundTruthBaseName=args.groundTruthBaseName, dataType=args.dataType, seed=args.seed)
+        buildShardsForFolder(args.dataSource, args.metaDataFile, args.targetFolder, args.datasetName, maxcount=args.maxcount, maxsize=args.maxsize, filePattern=args.filePattern, preprocess=args.preprocess, groundTruthBaseName=args.groundTruthBaseName, dataType=args.dataType, seed=args.seed)
     else:
-        ImageNetTools.buildShardsForDataset(args.dataSource, args.metaDataFile, args.targetFolder, args.datasetName, maxcount=args.maxcount, maxsize=args.maxsize, inMemory = args.inMemory, filePattern=args.filePattern, preprocess=args.preprocess, groundTruthBaseName=args.groundTruthBaseName, dataType=args.dataType, seed=args.seed)     
+        buildShardsForDataset(args.dataSource, args.metaDataFile, args.targetFolder, args.datasetName, maxcount=args.maxcount, maxsize=args.maxsize, inMemory = args.inMemory, filePattern=args.filePattern, preprocess=args.preprocess, groundTruthBaseName=args.groundTruthBaseName, dataType=args.dataType, seed=args.seed)     
 
 
 

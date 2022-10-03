@@ -6,14 +6,14 @@ Created on Sep 14, 2021
 #import src for tests
 
 
-from src.ImageNetTools import imageNetMapper, imageNetProvider
+from ImageNetTools import imageNetMapper, imageNetProvider
 import unittest
 import os
 import numpy.random as random
 import tempfile
 import importlib
 from torch.utils.data import DataLoader
-from src import ImageNetTools
+import ImageNetTools
  
 class ShardTester(unittest.TestCase):
 
