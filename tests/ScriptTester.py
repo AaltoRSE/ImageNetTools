@@ -29,9 +29,9 @@ class ScriptTester(unittest.TestCase):
         args = parse_args(commandlineArgs.split())    
         shard(commandlineArgs.split())
         filesInTempFolder = os.listdir(args.targetFolder)
-        assert len(filesInTempFolder) == 6 # we have 11 files those go into 6 nw files as a max of 2 files is permitted. 
+        assert len(filesInTempFolder) == 7 # we have 11 files those go into 6 nw files as a max of 2 files is permitted and then the info file. 
         for file in filesInTempFolder:
-            assert file.startswith(args.datasetName)
+            assert file.startswith(args.datasetName) or file == "FileInfo.json"
         
         #Now, test the contents.
         # Since the pictures came from Part1.tars, these will be kept in the key.
@@ -53,9 +53,9 @@ class ScriptTester(unittest.TestCase):
         args = parse_args(commandlineArgs.split())    
         shard(commandlineArgs.split())
         filesInTempFolder = os.listdir(args.targetFolder)
-        assert len(filesInTempFolder) == 6 # we have 11 files those go into 6 nw files as a max of 2 files is permitted. 
+        assert len(filesInTempFolder) == 7 # we have 11 files those go into 6 nw files as a max of 2 files is permitted and then the info file. 
         for file in filesInTempFolder:
-            assert file.startswith(args.datasetName)
+            assert file.startswith(args.datasetName) or file == "FileInfo.json"
         
         #Now, test the contents.
         # Since the pictures came from Part1.tars, these will be kept in the key.
@@ -79,9 +79,9 @@ class ScriptTester(unittest.TestCase):
         args = parse_args(commandlineArgs.split())    
         shard(commandlineArgs.split())
         filesInTempFolder = os.listdir(args.targetFolder)
-        assert len(filesInTempFolder) == 6 # we have 11 files those go into 6 nw files as a max of 2 files is permitted. 
+        assert len(filesInTempFolder) == 7 # we have 11 files those go into 6 nw files as a max of 2 files is permitted and then the info file. 
         for file in filesInTempFolder:
-            assert file.startswith(args.datasetName)
+            assert file.startswith(args.datasetName) or file == "FileInfo.json"
         #Now, test the contents.
         # Since the pictures came from Part1.tars, these will be kept in the key.
         with open('tests/ClassInfo.json','r') as f:

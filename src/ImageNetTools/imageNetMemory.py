@@ -72,8 +72,6 @@ class imageNetMemory(object):
     '''
     classdocs
     '''
-
-
     def __init__(self, pushQueue, waitQueue, imageNetFiles, batchSize=1000, classes = ["__key__","jpg;png","cls"]):
         '''
         Constructor

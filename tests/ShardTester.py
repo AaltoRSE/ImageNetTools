@@ -80,6 +80,7 @@ class ShardTester(unittest.TestCase):
         assert len(filesInTempFolder) == 5
         for file in filesInTempFolder:
             assert file.startswith('Shards') or file == 'FileInfo.json'
+            
         # Thats writing the shards done. Now read them
         fileBases = {os.path.splitext(file)[0] for file in files}
         shardNames = os.path.join(self.tempFolder.name,"Shards{0..3}.tar")
