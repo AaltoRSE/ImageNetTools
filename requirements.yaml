@@ -9,6 +9,6 @@ dependencies:
   - numpy  
   - pip
   - ipython
-  - pytest
+  - unittest
   - pip:
     - webdataset
