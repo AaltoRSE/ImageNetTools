@@ -76,7 +76,7 @@ def buildShardsFromFolder(fileFolder, fileToClass, targetFolder, outputFileName,
                     binary_data =stream.read()        
                 sample = getSample(data[1], fileToClass[data[2]], preprocess, binary_data, dataType)                                 
                 position,filename = writeSample(sample,writer)
-                outputMetaData[data[0]] = {'class' : fileToClass[data[2]], 'targetFile' : filename.replace(targetFolder,''), 'position' : position}                
+                outputMetaData[data[0]] = {'class' : str(fileToClass[data[2]]), 'targetFile' : filename.replace(targetFolder,''), 'position' : position}                
     with open(os.path.join(targetFolder,mappingFile), 'w') as metaFile:
         metaFile.write(json.dumps(outputMetaData))
 
@@ -137,7 +137,7 @@ def buildShardsFromSource(Files, fileToClass, targetFolder, outputFileName, file
                 binary_data = Files[data[0]]                         
                 sample = getSample(data[1], fileToClass[data[2]], preprocess, binary_data, dataType)                    
                 position,filename = writeSample(sample,writer)
-                outputMetaData[data[0]] = {'class' : fileToClass[data[2]], 'targetFile' : filename.replace(targetFolder,''), 'position' : position}                
+                outputMetaData[data[0]] = {'class' : str(fileToClass[data[2]]), 'targetFile' : filename.replace(targetFolder,''), 'position' : position}                
     with open(os.path.join(targetFolder,mappingFile), 'w') as metaFile:
         metaFile.write(json.dumps(outputMetaData))
                                 
